@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta content="Common,Latin" name="scripts">
 <meta content="initial-scale=1.0" name="viewport">
-<title>p11-kit RPC Protocol Specification</title>
+<title>PKCS #11 RPC Protocol Specification</title>
 <meta content="Daiki Ueno" name="author">
 <meta content="
-       This document specifies the p11-kit RPC (Remote Procedure Call) protocol, which enables remote access to PKCS#11 cryptographic modules. The protocol is designed for local communication scenarios such as forwarding PKCS#11 modules into sandboxed environments, accessing remote modules over SSH, and enabling inter-process communication between applications and cryptographic service providers. Unlike general-purpose key management protocols such as KMIP, the p11-kit RPC protocol prioritizes minimal overhead and faithful representation of PKCS#11 semantics. 
+       This document specifies the PKCS #11 RPC (Remote Procedure Call) protocol, which enables remote access to PKCS #11 cryptographic modules. The protocol is designed for local communication scenarios such as forwarding PKCS #11 modules into sandboxed environments and enabling inter-process communication between applications and cryptographic service providers. Unlike general-purpose key management protocols such as KMIP, the PKCS #11 RPC protocol prioritizes minimal overhead and faithful representation of PKCS #11 semantics. 
     " name="description">
 <meta content="xml2rfc 3.31.0" name="generator">
-<meta content="PKCS#11" name="keyword">
+<meta content="PKCS" name="keyword">
 <meta content="cryptoki" name="keyword">
 <meta content="RPC" name="keyword">
 <meta content="HSM" name="keyword">
@@ -1045,7 +1045,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <table class="ears">
 <thead><tr>
 <td class="left">Internet-Draft</td>
-<td class="center">p11-kit RPC</td>
+<td class="center">PKCS #11 RPC</td>
 <td class="right">January 2026</td>
 </tr></thead>
 <tfoot><tr>
@@ -1078,10 +1078,18 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </dd>
 </dl>
 </div>
-<h1 id="title">p11-kit RPC Protocol Specification</h1>
+<h1 id="title">PKCS #11 RPC Protocol Specification</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document specifies the p11-kit RPC (Remote Procedure Call) protocol, which enables remote access to PKCS#11 cryptographic modules. The protocol is designed for local communication scenarios such as forwarding PKCS#11 modules into sandboxed environments, accessing remote modules over SSH, and enabling inter-process communication between applications and cryptographic service providers. Unlike general-purpose key management protocols such as KMIP, the p11-kit RPC protocol prioritizes minimal overhead and faithful representation of PKCS#11 semantics.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document specifies the PKCS #11 RPC (Remote Procedure Call) protocol, which enables remote access to PKCS #11 cryptographic modules. The protocol is designed for local communication scenarios such as forwarding PKCS #11 modules into sandboxed environments and enabling inter-process communication between applications and cryptographic service providers. Unlike general-purpose key management protocols such as KMIP, the PKCS #11 RPC protocol prioritizes minimal overhead and faithful representation of PKCS #11 semantics.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.1">
+      <h2 id="name-discussion-venues">
+<a href="#name-discussion-venues" class="section-name selfRef">Discussion Venues</a>
+      </h2>
+<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
+<p id="section-note.1-2">Source for this draft and an issue tracker can be found at
+    <span><a href="https://github.com/ueno/draft-ueno-pkcs11-rpc">https://github.com/ueno/draft-ueno-pkcs11-rpc</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
 </section>
 <div id="status-of-memo">
 <section id="section-boilerplate.1">
@@ -1154,7 +1162,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
             <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-transport-layer" class="internal xref">Transport Layer</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
-                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-pipe-transport-exec" class="internal xref">Pipe Transport (exec)</a></p>
+                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-pipe-transport" class="internal xref">Pipe Transport</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
                 <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-unix-domain-socket-transpor" class="internal xref">Unix Domain Socket Transport</a></p>
@@ -1298,7 +1306,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
                 </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.3">
-                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-pkcs11-30-functions-version" class="internal xref">PKCS#11 3.0 Functions (Version 1+)</a></p>
+                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-pkcs-11-30-functions-versio" class="internal xref">PKCS #11 3.0 Functions (Version 1+)</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.4">
                 <p id="section-toc.1-1.7.2.4.1"><a href="#section-7.4" class="auto internal xref">7.4</a>.  <a href="#name-extended-functions-version-" class="internal xref">Extended Functions (Version 2+)</a></p>
@@ -1331,7 +1339,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
             <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-error-handling" class="internal xref">Error Handling</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
-                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-pkcs11-return-codes" class="internal xref">PKCS#11 Return Codes</a></p>
+                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-pkcs-11-return-codes" class="internal xref">PKCS #11 Return Codes</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
                 <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-protocol-errors" class="internal xref">Protocol Errors</a></p>
@@ -1421,43 +1429,37 @@ svg :is([fill="white"], [fill^="#fff"]) {
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">PKCS#11 <span>[<a href="#PKCS11-v2.40" class="cite xref">PKCS11-v2.40</a>]</span> <span>[<a href="#PKCS11-v3.1" class="cite xref">PKCS11-v3.1</a>]</span> defines a platform-independent API (Cryptoki) for cryptographic tokens. Traditionally, PKCS#11 modules are loaded as shared libraries (via <code>dlopen</code> on Unix or <code>LoadLibrary</code> on Windows) within the same process address space as the calling application. However, several use cases require remote access to PKCS#11 functionality:<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-1">PKCS #11 <span>[<a href="#PKCS11-v2.40" class="cite xref">PKCS11-v2.40</a>]</span> <span>[<a href="#PKCS11-v3.1" class="cite xref">PKCS11-v3.1</a>]</span> defines a platform-independent API (Cryptoki) for cryptographic tokens. Traditionally, PKCS #11 modules are loaded as shared libraries (via <code>dlopen</code> on Unix or <code>LoadLibrary</code> on Windows) within the same process address space as the calling application. However, several use cases require remote access to PKCS #11 functionality:<a href="#section-1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-1-2.1">
-          <p id="section-1-2.1.1">Forwarding system trust stores into flatpak sandboxes<a href="#section-1-2.1.1" class="pilcrow">¶</a></p>
+          <p id="section-1-2.1.1">Sandboxing proprietary PKCS #11 modules using bubblewrap or similar isolation tools<a href="#section-1-2.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-1-2.2">
-          <p id="section-1-2.2.1">Sandboxing proprietary PKCS#11 modules using bubblewrap or similar isolation tools<a href="#section-1-2.2.1" class="pilcrow">¶</a></p>
+          <p id="section-1-2.2.1">Delegating cryptographic operations from inside enclaves to host systems<a href="#section-1-2.2.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-1-2.3">
-          <p id="section-1-2.3.1">Accessing PKCS#11 modules over SSH connections<a href="#section-1-2.3.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-1-2.4">
-          <p id="section-1-2.4.1">Delegating cryptographic operations from inside enclaves to host systems<a href="#section-1-2.4.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-1-2.5">
-          <p id="section-1-2.5.1">Implementing PKCS#11 modules in foreign languages (e.g., Go, Rust) with process isolation<a href="#section-1-2.5.1" class="pilcrow">¶</a></p>
+          <p id="section-1-2.3.1">Forwarding system trust stores into sandboxes<a href="#section-1-2.3.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-1-3">The p11-kit RPC protocol addresses these use cases by providing a wire protocol that faithfully represents PKCS#11 function calls and their semantics.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-3">The PKCS #11 RPC protocol addresses these use cases by providing a wire protocol that faithfully represents PKCS #11 function calls and their semantics.<a href="#section-1-3" class="pilcrow">¶</a></p>
 <div id="relationship-to-other-protocols">
 <section id="section-1.1">
         <h3 id="name-relationship-to-other-proto">
 <a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-relationship-to-other-proto" class="section-name selfRef">Relationship to Other Protocols</a>
         </h3>
-<p id="section-1.1-1">While KMIP <span>[<a href="#KMIP" class="cite xref">KMIP</a>]</span> provides a comprehensive protocol for key management operations, the p11-kit RPC protocol serves a different purpose:<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+<p id="section-1.1-1">While KMIP <span>[<a href="#KMIP" class="cite xref">KMIP</a>]</span> provides a comprehensive protocol for key management operations, the PKCS #11 RPC protocol serves a different purpose:<a href="#section-1.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-1.1-2.1">
-            <p id="section-1.1-2.1.1"><strong>Scope</strong>: p11-kit RPC is specifically designed for exposing existing PKCS#11 modules over a communication channel, whereas KMIP is a general-purpose key management protocol<a href="#section-1.1-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-1.1-2.1.1"><strong>Scope</strong>: PKCS #11 RPC is specifically designed for exposing existing PKCS #11 modules over a trusted communication channel, whereas KMIP is a general-purpose key management protocol<a href="#section-1.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.1-2.2">
-            <p id="section-1.1-2.2.1"><strong>Design Goals</strong>: p11-kit RPC prioritizes minimal overhead and faithful PKCS#11 semantics, making it suitable for local IPC scenarios<a href="#section-1.1-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-1.1-2.2.1"><strong>Design Goals</strong>: PKCS #11 RPC prioritizes minimal overhead and faithful PKCS #11 semantics, making it suitable for local IPC scenarios<a href="#section-1.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.1-2.3">
-            <p id="section-1.1-2.3.1"><strong>Use Cases</strong>: p11-kit RPC is optimized for scenarios like sandbox forwarding and SSH tunneling, where existing PKCS#11 modules need to be accessed remotely without translation<a href="#section-1.1-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-1.1-2.3.1"><strong>Use Cases</strong>: PKCS #11 RPC is optimized for scenarios like sandbox forwarding and SSH tunneling, where existing PKCS #11 modules need to be accessed remotely without translation<a href="#section-1.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-1.1-3">The protocol does not aim to be a general-purpose key management protocol or to provide features beyond what PKCS#11 itself offers.<a href="#section-1.1-3" class="pilcrow">¶</a></p>
+<p id="section-1.1-3">The protocol does not aim to be a general-purpose key management protocol or to provide features beyond what PKCS #11 itself offers.<a href="#section-1.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conventions-and-definitions">
@@ -1478,7 +1480,7 @@ appear in all capitals, as shown here.<a href="#section-1.2-1" class="pilcrow">�
       <h2 id="name-protocol-overview">
 <a href="#section-2" class="section-number selfRef">2. </a><a href="#name-protocol-overview" class="section-name selfRef">Protocol Overview</a>
       </h2>
-<p id="section-2-1">The p11-kit RPC protocol is a simple request-response protocol that serializes PKCS#11 function calls and their arguments into binary messages transmitted over a bidirectional byte stream (typically stdin/stdout, Unix domain sockets, or VSOCK sockets).<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-1">The PKCS #11 RPC protocol is a simple request-response protocol that serializes PKCS #11 function calls and their arguments into binary messages transmitted over a bidirectional byte stream (typically stdin/stdout, Unix domain sockets, or VSOCK sockets).<a href="#section-2-1" class="pilcrow">¶</a></p>
 <div id="architecture">
 <section id="section-2.1">
         <h3 id="name-architecture">
@@ -1493,7 +1495,7 @@ appear in all capitals, as shown here.<a href="#section-1.2-1" class="pilcrow">�
             <p id="section-2.1-2.2.1"><strong>Message Layer</strong>: Defines message framing and serialization<a href="#section-2.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-2.1-2.3">
-            <p id="section-2.1-2.3.1"><strong>Call Layer</strong>: Maps PKCS#11 functions to RPC calls<a href="#section-2.1-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-2.1-2.3.1"><strong>Call Layer</strong>: Maps PKCS #11 functions to RPC calls<a href="#section-2.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-2.1-2.4">
             <p id="section-2.1-2.4.1"><strong>Version Negotiation</strong>: Allows clients and servers to agree on protocol capabilities<a href="#section-2.1-2.4.1" class="pilcrow">¶</a></p>
@@ -1502,20 +1504,20 @@ appear in all capitals, as shown here.<a href="#section-1.2-1" class="pilcrow">�
 <div class="alignLeft art-text artwork" id="section-2.1-3">
 <pre>
 ┌─────────────────────────────────────────────┐
-│          PKCS#11 Application                │
+│          PKCS #11 Application               │
 └─────────────────┬───────────────────────────┘
-                  │ PKCS#11 API
+                  │ PKCS #11 API
 ┌─────────────────▼───────────────────────────┐
-│          p11-kit RPC Client                 │
+│          PKCS #11 RPC Client                │
 └─────────────────┬───────────────────────────┘
                   │ RPC Protocol
                   │ (over transport)
 ┌─────────────────▼───────────────────────────┐
-│          p11-kit RPC Server                 │
+│          PKCS #11 RPC Server                │
 └─────────────────┬───────────────────────────┘
-                  │ PKCS#11 API
+                  │ PKCS #11 API
 ┌─────────────────▼───────────────────────────┐
-│     PKCS#11 Module (e.g., SoftHSM)          │
+│     PKCS #11 Module (e.g., SoftHSM)         │
 └─────────────────────────────────────────────┘
 </pre><a href="#section-2.1-3" class="pilcrow">¶</a>
 </div>
@@ -1529,15 +1531,15 @@ appear in all capitals, as shown here.<a href="#section-1.2-1" class="pilcrow">�
 <a href="#section-3" class="section-number selfRef">3. </a><a href="#name-transport-layer" class="section-name selfRef">Transport Layer</a>
       </h2>
 <p id="section-3-1">The protocol operates over a reliable, ordered, bidirectional byte stream. Three transport mechanisms are commonly used:<a href="#section-3-1" class="pilcrow">¶</a></p>
-<div id="pipe-transport-exec">
+<div id="pipe-transport">
 <section id="section-3.1">
-        <h3 id="name-pipe-transport-exec">
-<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-pipe-transport-exec" class="section-name selfRef">Pipe Transport (exec)</a>
+        <h3 id="name-pipe-transport">
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-pipe-transport" class="section-name selfRef">Pipe Transport</a>
         </h3>
-<p id="section-3.1-1">The client launches a server process and communicates via stdin/stdout pipes. The remote specification begins with <code>|</code> followed by a command line:<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.1-1">The client launches a server process and communicates via stdin/stdout pipes. In the p11-glue project <span>[<a href="#P11-GLUE" class="cite xref">P11-GLUE</a>]</span>, this is implemented through the <code>p11-kit remote</code> helper command, which can be used to instruct the PKCS #11 module indirection in the configuration file begins with <code>|</code> followed by a command line:<a href="#section-3.1-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3.1-2">
 <pre>
-|ssh user@remote p11-kit remote /path/to/module.so
+|bwrap ... p11-kit remote /path/to/module.so
 </pre><a href="#section-3.1-2" class="pilcrow">¶</a>
 </div>
 </section>
@@ -1547,7 +1549,7 @@ appear in all capitals, as shown here.<a href="#section-1.2-1" class="pilcrow">�
         <h3 id="name-unix-domain-socket-transpor">
 <a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-unix-domain-socket-transpor" class="section-name selfRef">Unix Domain Socket Transport</a>
         </h3>
-<p id="section-3.2-1">The client connects to a server listening on a Unix domain socket. The remote specification uses the format:<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.2-1">The client connects to a server listening on a Unix domain socket. In the p11-glue project <span>[<a href="#P11-GLUE" class="cite xref">P11-GLUE</a>]</span>, this is implemented as a special configuration syntax:<a href="#section-3.2-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3.2-2">
 <pre>
 unix:path=/path/to/socket
@@ -1560,7 +1562,7 @@ unix:path=/path/to/socket
         <h3 id="name-vsock-transport">
 <a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-vsock-transport" class="section-name selfRef">VSOCK Transport</a>
         </h3>
-<p id="section-3.3-1">For virtual machine scenarios, the protocol can operate over VSOCK sockets:<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.3-1">For virtual machine scenarios, the protocol can operate over VSOCK sockets. In the p11-glue project <span>[<a href="#P11-GLUE" class="cite xref">P11-GLUE</a>]</span>, this is implemented as a special configuration syntax:<a href="#section-3.3-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3.3-2">
 <pre>
 vsock:cid=CID;port=PORT
@@ -1575,7 +1577,7 @@ vsock:cid=CID;port=PORT
       <h2 id="name-version-negotiation">
 <a href="#section-4" class="section-number selfRef">4. </a><a href="#name-version-negotiation" class="section-name selfRef">Version Negotiation</a>
       </h2>
-<p id="section-4-1">The protocol supports version negotiation to enable backward compatibility and feature evolution. The negotiation occurs immediately after transport establishment and before any PKCS#11 operations.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<p id="section-4-1">The protocol supports version negotiation to enable backward compatibility and feature evolution. The negotiation occurs immediately after transport establishment and before any PKCS #11 operations.<a href="#section-4-1" class="pilcrow">¶</a></p>
 <div id="protocol-versions">
 <section id="section-4.1">
         <h3 id="name-protocol-versions">
@@ -1584,10 +1586,10 @@ vsock:cid=CID;port=PORT
 <p id="section-4.1-1">The following protocol versions are defined:<a href="#section-4.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-4.1-2.1">
-            <p id="section-4.1-2.1.1"><strong>Version 0</strong>: Initial version supporting PKCS#11 2.x functions<a href="#section-4.1-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-4.1-2.1.1"><strong>Version 0</strong>: Initial version supporting PKCS #11 2.x functions<a href="#section-4.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-4.1-2.2">
-            <p id="section-4.1-2.2.1"><strong>Version 1</strong>: Adds PKCS#11 3.0 functions (message-based encryption, C_LoginUser, C_SessionCancel)<a href="#section-4.1-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-4.1-2.2.1"><strong>Version 1</strong>: Adds PKCS #11 3.0 functions (message-based encryption, C_LoginUser, C_SessionCancel)<a href="#section-4.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-4.1-2.3">
             <p id="section-4.1-2.3.1"><strong>Version 2</strong>: Adds functions with mechanism parameter updates (C_InitToken2, C_DeriveKey2)<a href="#section-4.1-2.3.1" class="pilcrow">¶</a></p>
@@ -1674,6 +1676,11 @@ Client                           Server
    |                                | (Server max = 1)
    |&lt;------ Version 1 (0x01) -------|
    |                                |
+   |---- Reconnect ----------------&gt;|
+   |                                |
+   |------- Version 1 (0x01) ------&gt;|
+   |&lt;------ Version 1 (0x01) -------|
+   |                                |
 </pre><a href="#section-4.2.2-1" class="pilcrow">¶</a>
 </div>
 </section>
@@ -1732,7 +1739,7 @@ Client                           Server (v0 only)
 <p id="section-5.1-3">Where:<a href="#section-5.1-3" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5.1-4.1">
-            <p id="section-5.1-4.1.1"><strong>Call Code</strong> (4 bytes): Unsigned 32-bit integer identifying the function call or response. For requests, this identifies the PKCS#11 function. For responses, this echoes the call code from the request.<a href="#section-5.1-4.1.1" class="pilcrow">¶</a></p>
+            <p id="section-5.1-4.1.1"><strong>Call Code</strong> (4 bytes): Unsigned 32-bit integer identifying the function call or response. For requests, this identifies the PKCS #11 function. For responses, this echoes the call code from the request.<a href="#section-5.1-4.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.1-4.2">
             <p id="section-5.1-4.2.1"><strong>Options Length</strong> (4 bytes): Length in bytes of the options area<a href="#section-5.1-4.2.1" class="pilcrow">¶</a></p>
@@ -1766,7 +1773,7 @@ Client                           Server (v0 only)
 <p id="section-5.3.1-1">Request messages consist of:<a href="#section-5.3.1-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-5.3.1-2">
 <li id="section-5.3.1-2.1">
-              <p id="section-5.3.1-2.1.1">Call ID (4 bytes): Identifies the PKCS#11 function<a href="#section-5.3.1-2.1.1" class="pilcrow">¶</a></p>
+              <p id="section-5.3.1-2.1.1">Call ID (4 bytes): Identifies the PKCS #11 function<a href="#section-5.3.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-5.3.1-2.2">
               <p id="section-5.3.1-2.2.1">Signature (variable): Null-terminated signature string<a href="#section-5.3.1-2.2.1" class="pilcrow">¶</a></p>
@@ -1813,7 +1820,7 @@ Client                           Server (v0 only)
       <h2 id="name-serialization-format">
 <a href="#section-6" class="section-number selfRef">6. </a><a href="#name-serialization-format" class="section-name selfRef">Serialization Format</a>
       </h2>
-<p id="section-6-1">The protocol uses a type-signature based serialization format inspired by the D-Bus message format <span>[<a href="#DBUS" class="cite xref">DBUS</a>]</span>. Each PKCS#11 function has associated request and response signatures that define the types and order of arguments.<a href="#section-6-1" class="pilcrow">¶</a></p>
+<p id="section-6-1">The protocol uses a type-signature based serialization format inspired by the D-Bus message format <span>[<a href="#DBUS" class="cite xref">DBUS</a>]</span>. Each PKCS #11 function has associated request and response signatures that define the types and order of arguments.<a href="#section-6-1" class="pilcrow">¶</a></p>
 <div id="type-signatures">
 <section id="section-6.1">
         <h3 id="name-type-signatures">
@@ -1903,7 +1910,7 @@ Client                           Server (v0 only)
               <p id="section-6.1.1-1.1.1"><code>a_</code>: Array of type <code>_</code>. The serialization includes a count followed by elements.<a href="#section-6.1.1-1.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-6.1.1-1.2">
-              <p id="section-6.1.1-1.2.1"><code>f_</code>: Buffer for type <code>_</code>. Used for output parameters where the buffer size is negotiated using the PKCS#11 convention (NULL pointer to query size, then actual buffer).<a href="#section-6.1.1-1.2.1" class="pilcrow">¶</a></p>
+              <p id="section-6.1.1-1.2.1"><code>f_</code>: Buffer for type <code>_</code>. Used for output parameters where the buffer size is negotiated using the PKCS #11 convention (NULL pointer to query size, then actual buffer).<a href="#section-6.1.1-1.2.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 </section>
@@ -1928,7 +1935,7 @@ Client                           Server (v0 only)
           <h4 id="name-ck_ulong-type-u">
 <a href="#section-6.2.2" class="section-number selfRef">6.2.2. </a><a href="#name-ck_ulong-type-u" class="section-name selfRef">CK_ULONG (type 'u')</a>
           </h4>
-<p id="section-6.2.2-1">Serialized as a 32-bit unsigned integer in network byte order. Despite PKCS#11 defining CK_ULONG as potentially 64-bit on some platforms, the RPC protocol uses 32-bit encoding for portability across different data models (LP64, LLP64, etc.).<a href="#section-6.2.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.2.2-1">Serialized as a 32-bit unsigned integer in network byte order. Despite PKCS #11 defining CK_ULONG as potentially 64-bit on some platforms, the RPC protocol uses 32-bit encoding for portability across different data models (LP64, LLP64, etc.).<a href="#section-6.2.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="ckversion-type-v">
@@ -1961,7 +1968,7 @@ Client                           Server (v0 only)
           <h4 id="name-space-padded-string-type-s">
 <a href="#section-6.3.2" class="section-number selfRef">6.3.2. </a><a href="#name-space-padded-string-type-s" class="section-name selfRef">Space-padded String (type 's')</a>
           </h4>
-<p id="section-6.3.2-1">Used for fixed-length PKCS#11 string fields (e.g., CK_TOKEN_INFO labels). Serialized as:
+<p id="section-6.3.2-1">Used for fixed-length PKCS #11 string fields (e.g., CK_TOKEN_INFO labels). Serialized as:
 1. Length (4 bytes): Total length of the string field
 2. Bytes (variable): UTF-8 encoded string, space-padded to length<a href="#section-6.3.2-1" class="pilcrow">¶</a></p>
 </section>
@@ -2045,7 +2052,7 @@ Client                           Server (v0 only)
           <h4 id="name-attribute-buffer-type-fa">
 <a href="#section-6.5.3" class="section-number selfRef">6.5.3. </a><a href="#name-attribute-buffer-type-fa" class="section-name selfRef">Attribute Buffer (type 'fA')</a>
           </h4>
-<p id="section-6.5.3-1">Used for output attribute arrays where the application provides templates. Follows the PKCS#11 convention for retrieving variable-length values:<a href="#section-6.5.3-1" class="pilcrow">¶</a></p>
+<p id="section-6.5.3-1">Used for output attribute arrays where the application provides templates. Follows the PKCS #11 convention for retrieving variable-length values:<a href="#section-6.5.3-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-6.5.3-2">
 <li id="section-6.5.3-2.1">
               <p id="section-6.5.3-2.1.1">Client sends attribute template with pValue pointers<a href="#section-6.5.3-2.1.1" class="pilcrow">¶</a></p>
@@ -2074,7 +2081,7 @@ Client                           Server (v0 only)
         <h3 id="name-variable-length-output-conv">
 <a href="#section-6.6" class="section-number selfRef">6.6. </a><a href="#name-variable-length-output-conv" class="section-name selfRef">Variable-Length Output Convention</a>
         </h3>
-<p id="section-6.6-1">The protocol implements the PKCS#11 convention for variable-length output parameters:<a href="#section-6.6-1" class="pilcrow">¶</a></p>
+<p id="section-6.6-1">The protocol implements the PKCS #11 convention for variable-length output parameters:<a href="#section-6.6-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-6.6-2">
 <li id="section-6.6-2.1">
             <p id="section-6.6-2.1.1">Client sends <code>f_</code> (buffer) with length 0 or requested size<a href="#section-6.6-2.1.1" class="pilcrow">¶</a></p>
@@ -2101,7 +2108,7 @@ Client                           Server (v0 only)
       <h2 id="name-function-call-mappings">
 <a href="#section-7" class="section-number selfRef">7. </a><a href="#name-function-call-mappings" class="section-name selfRef">Function Call Mappings</a>
       </h2>
-<p id="section-7-1">Each PKCS#11 function is mapped to an RPC call with a unique call identifier and type signature.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<p id="section-7-1">Each PKCS #11 function is mapped to an RPC call with a unique call identifier and type signature.<a href="#section-7-1" class="pilcrow">¶</a></p>
 <div id="call-identifiers">
 <section id="section-7.1">
         <h3 id="name-call-identifiers">
@@ -2113,10 +2120,10 @@ Client                           Server (v0 only)
             <p id="section-7.1-2.1.1">0: P11_RPC_CALL_ERROR (error response)<a href="#section-7.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-7.1-2.2">
-            <p id="section-7.1-2.2.1">1-57: PKCS#11 2.x functions<a href="#section-7.1-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-7.1-2.2.1">1-57: PKCS #11 2.x functions<a href="#section-7.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-7.1-2.3">
-            <p id="section-7.1-2.3.1">58-79: PKCS#11 3.0 functions (version 1+)<a href="#section-7.1-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-7.1-2.3.1">58-79: PKCS #11 3.0 functions (version 1+)<a href="#section-7.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-7.1-2.4">
             <p id="section-7.1-2.4.1">80-81: Extended functions with mechanism parameter updates (version 2+)<a href="#section-7.1-2.4.1" class="pilcrow">¶</a></p>
@@ -2192,12 +2199,12 @@ Response:
 </div>
 </section>
 </div>
-<div id="pkcs11-30-functions-version-1">
+<div id="pkcs-11-30-functions-version-1">
 <section id="section-7.3">
-        <h3 id="name-pkcs11-30-functions-version">
-<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-pkcs11-30-functions-version" class="section-name selfRef">PKCS#11 3.0 Functions (Version 1+)</a>
+        <h3 id="name-pkcs-11-30-functions-versio">
+<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-pkcs-11-30-functions-versio" class="section-name selfRef">PKCS #11 3.0 Functions (Version 1+)</a>
         </h3>
-<p id="section-7.3-1">Version 1 of the protocol adds support for PKCS#11 3.0 functions:<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+<p id="section-7.3-1">Version 1 of the protocol adds support for PKCS #11 3.0 functions:<a href="#section-7.3-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-7.3-2.1">
             <p id="section-7.3-2.1.1">C_LoginUser (call ID 58): Enhanced login with username<a href="#section-7.3-2.1.1" class="pilcrow">¶</a></p>
@@ -2272,7 +2279,7 @@ Response signature: <code>"uPu"</code> (derived_key_handle, updated_mechanism_pa
         <h3 id="name-version-0">
 <a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-version-0" class="section-name selfRef">Version 0</a>
         </h3>
-<p id="section-8.1-1">Initial protocol version supporting PKCS#11 2.40 functions:<a href="#section-8.1-1" class="pilcrow">¶</a></p>
+<p id="section-8.1-1">Initial protocol version supporting PKCS #11 2.40 functions:<a href="#section-8.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.1-2.1">
             <p id="section-8.1-2.1.1">All functions from C_Initialize through C_WaitForSlotEvent<a href="#section-8.1-2.1.1" class="pilcrow">¶</a></p>
@@ -2291,7 +2298,7 @@ Response signature: <code>"uPu"</code> (derived_key_handle, updated_mechanism_pa
         <h3 id="name-version-1">
 <a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-version-1" class="section-name selfRef">Version 1</a>
         </h3>
-<p id="section-8.2-1">Adds PKCS#11 3.0 function support:<a href="#section-8.2-1" class="pilcrow">¶</a></p>
+<p id="section-8.2-1">Adds PKCS #11 3.0 function support:<a href="#section-8.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.2-2.1">
             <p id="section-8.2-2.1.1">Version negotiation support<a href="#section-8.2-2.1.1" class="pilcrow">¶</a></p>
@@ -2342,12 +2349,12 @@ Response signature: <code>"uPu"</code> (derived_key_handle, updated_mechanism_pa
       <h2 id="name-error-handling">
 <a href="#section-9" class="section-number selfRef">9. </a><a href="#name-error-handling" class="section-name selfRef">Error Handling</a>
       </h2>
-<div id="pkcs11-return-codes">
+<div id="pkcs-11-return-codes">
 <section id="section-9.1">
-        <h3 id="name-pkcs11-return-codes">
-<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-pkcs11-return-codes" class="section-name selfRef">PKCS#11 Return Codes</a>
+        <h3 id="name-pkcs-11-return-codes">
+<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-pkcs-11-return-codes" class="section-name selfRef">PKCS #11 Return Codes</a>
         </h3>
-<p id="section-9.1-1">All PKCS#11 return codes (CK_RV) are transmitted as unsigned 32-bit integers in response messages. The protocol does not define additional error codes beyond those in PKCS#11.<a href="#section-9.1-1" class="pilcrow">¶</a></p>
+<p id="section-9.1-1">All PKCS #11 return codes (CK_RV) are transmitted as unsigned 32-bit integers in response messages. The protocol does not define additional error codes beyond those in PKCS #11.<a href="#section-9.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="protocol-errors">
@@ -2443,7 +2450,7 @@ Response signature: <code>"uPu"</code> (derived_key_handle, updated_mechanism_pa
         <h3 id="name-sandboxing">
 <a href="#section-10.3" class="section-number selfRef">10.3. </a><a href="#name-sandboxing" class="section-name selfRef">Sandboxing</a>
         </h3>
-<p id="section-10.3-1">A key use case for the protocol is to sandbox untrusted PKCS#11 modules. When sandboxing:<a href="#section-10.3-1" class="pilcrow">¶</a></p>
+<p id="section-10.3-1">A key use case for the protocol is to sandbox untrusted PKCS #11 modules. When sandboxing:<a href="#section-10.3-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-10.3-2.1">
             <p id="section-10.3-2.1.1">The server process should run with minimal privileges<a href="#section-10.3-2.1.1" class="pilcrow">¶</a></p>
@@ -2477,7 +2484,7 @@ Response signature: <code>"uPu"</code> (derived_key_handle, updated_mechanism_pa
             <p id="section-10.4-2.3.1">Avoid logging sensitive parameters<a href="#section-10.4-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-10.4-2.4">
-            <p id="section-10.4-2.4.1">Respect PKCS#11 CKA_SENSITIVE and CKA_EXTRACTABLE attributes<a href="#section-10.4-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-10.4-2.4.1">Respect PKCS #11 CKA_SENSITIVE and CKA_EXTRACTABLE attributes<a href="#section-10.4-2.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2496,7 +2503,7 @@ Response signature: <code>"uPu"</code> (derived_key_handle, updated_mechanism_pa
             <p id="section-10.5-2.2.1">Attribute types must be validated<a href="#section-10.5-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-10.5-2.3">
-            <p id="section-10.5-2.3.1">Mechanism parameters must be validated according to PKCS#11 specifications<a href="#section-10.5-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-10.5-2.3.1">Mechanism parameters must be validated according to PKCS #11 specifications<a href="#section-10.5-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-10.5-2.4">
             <p id="section-10.5-2.4.1">Call IDs must be within valid ranges<a href="#section-10.5-2.4.1" class="pilcrow">¶</a></p>
@@ -2563,13 +2570,13 @@ Response signature: <code>"uPu"</code> (derived_key_handle, updated_mechanism_pa
         <h3 id="name-mechanism-parameter-handlin">
 <a href="#section-12.3" class="section-number selfRef">12.3. </a><a href="#name-mechanism-parameter-handlin" class="section-name selfRef">Mechanism Parameter Handling</a>
         </h3>
-<p id="section-12.3-1">Different PKCS#11 mechanisms use different parameter structures. Implementations must:<a href="#section-12.3-1" class="pilcrow">¶</a></p>
+<p id="section-12.3-1">Different PKCS #11 mechanisms use different parameter structures. Implementations must:<a href="#section-12.3-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-12.3-2.1">
             <p id="section-12.3-2.1.1">Maintain tables mapping mechanism types to parameter structures<a href="#section-12.3-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-12.3-2.2">
-            <p id="section-12.3-2.2.1">Validate parameter structures according to PKCS#11 specifications<a href="#section-12.3-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-12.3-2.2.1">Validate parameter structures according to PKCS #11 specifications<a href="#section-12.3-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-12.3-2.3">
             <p id="section-12.3-2.3.1">Handle vendor-specific mechanisms gracefully<a href="#section-12.3-2.3.1" class="pilcrow">¶</a></p>
@@ -2667,7 +2674,7 @@ Response signature: <code>"uPu"</code> (derived_key_handle, updated_mechanism_pa
 <dd class="break"></dd>
 <dt id="P11-GLUE">[P11-GLUE]</dt>
       <dd>
-<span class="refAuthor">p11-glue Project</span>, <span class="refTitle">"p11-glue: Standardizing PKCS#11"</span>, <span>n.d.</span>, <span>&lt;<a href="https://p11-glue.github.io/p11-glue/">https://p11-glue.github.io/p11-glue/</a>&gt;</span>. </dd>
+<span class="refAuthor">p11-glue Project</span>, <span class="refTitle">"p11-glue: Standardizing PKCS #11"</span>, <span>n.d.</span>, <span>&lt;<a href="https://p11-glue.github.io/p11-glue/">https://p11-glue.github.io/p11-glue/</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
@@ -2679,7 +2686,7 @@ Response signature: <code>"uPu"</code> (derived_key_handle, updated_mechanism_pa
       <h2 id="name-acknowledgments">
 <a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
       </h2>
-<p id="appendix-A-1">The author would like to thank Stef Walter for creating the p11-kit project and designing the initial RPC protocol. Thanks also to the p11-glue community for their work on standardizing PKCS#11 practices.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<p id="appendix-A-1">The author would like to thank Stef Walter for creating the p11-kit project and designing the initial RPC protocol. Thanks also to the p11-glue community for their work on standardizing PKCS #11 practices.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="complete-function-signature-table">
@@ -2687,7 +2694,7 @@ Response signature: <code>"uPu"</code> (derived_key_handle, updated_mechanism_pa
       <h2 id="name-complete-function-signature">
 <a href="#name-complete-function-signature" class="section-name selfRef">Complete Function Signature Table</a>
       </h2>
-<p id="appendix-B-1">This appendix provides a complete reference of all PKCS#11 function signatures in the protocol.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+<p id="appendix-B-1">This appendix provides a complete reference of all PKCS #11 function signatures in the protocol.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
 <table class="center" id="table-2">
         <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
 <thead>
