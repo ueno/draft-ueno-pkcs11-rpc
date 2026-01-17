@@ -9,8 +9,8 @@ number:
 date:
 consensus: true
 v: 3
-area: SEC
-workgroup: Network Working Group
+# area: SEC
+# workgroup: Network Working Group
 keyword:
  - PKCS#11
  - cryptoki
