@@ -82,7 +82,7 @@ While KMIP {{KMIP}} provides a comprehensive protocol for key management operati
 
 - **Scope**: PKCS #11 RPC is specifically designed for exposing existing PKCS #11 modules over a trusted communication channel, whereas KMIP is a general-purpose key management protocol
 - **Design Goals**: PKCS #11 RPC prioritizes minimal overhead and faithful PKCS #11 semantics, making it suitable for local IPC scenarios
-- **Use Cases**: PKCS #11 RPC is optimized for scenarios like sandbox forwarding and SSH tunneling, where existing PKCS #11 modules need to be accessed remotely without translation
+- **Use Cases**: PKCS #11 RPC is optimized for scenarios like sandbox forwarding, where existing PKCS #11 modules need to be accessed remotely without translation
 
 The protocol does not aim to be a general-purpose key management protocol or to provide features beyond what PKCS #11 itself offers.
 
@@ -567,7 +567,6 @@ If the transport layer fails:
 
 The protocol itself does not provide authentication mechanisms. Authentication is delegated to the transport layer:
 
-- For SSH-based transports: SSH authentication
 - For Unix domain sockets: File system permissions and optional SO_PEERCRED
 - For VSOCK: VM isolation boundaries
 
@@ -575,7 +574,6 @@ The protocol itself does not provide authentication mechanisms. Authentication i
 
 The protocol does not provide encryption or integrity protection. These properties must be provided by:
 
-- Transport layer encryption (e.g., SSH)
 - Operating system isolation (e.g., Unix domain sockets with file system permissions)
 - Hypervisor isolation (e.g., VSOCK between VMs)
 
