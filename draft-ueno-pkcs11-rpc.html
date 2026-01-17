@@ -1,0 +1,3270 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>p11-kit RPC Protocol Specification</title>
+<meta content="Daiki Ueno" name="author">
+<meta content="
+       This document specifies the p11-kit RPC (Remote Procedure Call) protocol, which enables remote access to PKCS#11 cryptographic modules. The protocol is designed for local communication scenarios such as forwarding PKCS#11 modules into sandboxed environments, accessing remote modules over SSH, and enabling inter-process communication between applications and cryptographic service providers. Unlike general-purpose key management protocols such as KMIP, the p11-kit RPC protocol prioritizes minimal overhead and faithful representation of PKCS#11 semantics. 
+    " name="description">
+<meta content="xml2rfc 3.31.0" name="generator">
+<meta content="PKCS#11" name="keyword">
+<meta content="cryptoki" name="keyword">
+<meta content="RPC" name="keyword">
+<meta content="HSM" name="keyword">
+<meta content="draft-ueno-pkcs11-rpc-latest" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.31.0
+    Python 3.12.12
+    ConfigArgParse 1.7
+    google-i18n-address 3.1.1
+    intervaltree 3.2.1
+    Jinja2 3.1.6
+    lxml 6.0.2
+    platformdirs 4.5.1
+    pycountry 24.6.1
+    PyYAML 6.0.3
+    requests 2.32.5
+    wcwidth 0.2.14
+-->
+<link href="draft-ueno-pkcs11-rpc.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Lora SemiBold'), local('Lora-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --background-color: #fff;
+  --text-color: #222;
+  --title-color: #191919;
+  --link-color: #2a6496;
+  --highlight-color: #f9f9f9;
+  --line-color: #eee;
+  --pilcrow-weak: #ddd;
+  --pilcrow-strong: #bbb;
+  --small-font-size: 14.5px;
+  --font-mono: 'Oxygen Mono', monospace;
+  --font-title: "Sofia Sans Semi Condensed", sans-serif;
+  scrollbar-color: #bbb #eee;
+}
+body {
+  max-width: 600px;
+  margin: 75px auto;
+  padding: 0 5px;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font: 16px/22px "Lora", serif;
+  scroll-behavior: smooth;
+}
+
+.ears {
+  display: none;
+}
+
+/* headings */
+section {
+  clear: both;
+}
+.section-number {
+  padding-right: 0.5em;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  font-weight: 680;
+  margin: 0.8em 0 0.3em;
+  font-size-adjust: 0.5;
+  color: var(--title-color);
+}
+h1#title {
+  font-size: 32px;
+  line-height: 40px;
+  clear: both;
+}
+h1#title, h1#rfcnum {
+  margin: 1.5em 0 0.2em;
+}
+h1#rfcnum + h1#title {
+  margin: 0.2em 0;
+}
+
+h1, h2, h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+h4, h5, h6 {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+/* general structure */
+.author {
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+#abstract+p {
+  font-size: 18px;
+  line-height: 24px;
+}
+#abstract+p code, #abstract+p samp, #abstract+p tt {
+  font-size: 16px;
+  line-height: 0;
+}
+
+p {
+  padding: 0;
+  margin: 0.5em 0;
+  text-align: left;
+}
+div {
+  margin: 0;
+}
+.alignRight.art-text {
+  background-color: var(--highlight-color);
+  border: 1px solid var(--line-color);
+  border-radius: 3px;
+  padding: 0.5em 1em 0;
+  margin-bottom: 0.5em;
+}
+.alignRight.art-text pre {
+  padding: 0;
+  width: auto;
+}
+.alignRight {
+  margin: 1em 0;
+}
+.alignRight > *:first-child {
+  border: none;
+  margin: 0;
+  float: right;
+  clear: both;
+}
+.alignRight > *:nth-child(2) {
+  clear: both;
+  display: block;
+  border: none;
+}
+svg {
+  display: block;
+}
+/* font-family isn't space-separated, but =~ will have to do */
+svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
+  font-family: var(--font-mono);
+}
+.alignCenter.art-text {
+  background-color: var(--highlight-color);
+  border: 1px solid var(--line-color);
+  border-radius: 3px;
+  padding: 0.5em 1em 0;
+  margin-bottom: 0.5em;
+}
+.alignCenter.art-text pre {
+  padding: 0;
+  width: auto;
+}
+.alignCenter {
+  margin: 1em 0;
+}
+.alignCenter > *:first-child {
+  border: none;
+  /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+     support flexbox yet.
+  */
+  display: table;
+  margin: 0 auto;
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 0.5em 2em;
+  & :is(ol, ul) {
+    margin-left: 1em;
+  }
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+  & li {
+    margin-top: 0.5em;
+  }
+}
+:is(ul, ol).compact, .ulCompact, .olCompact {
+  margin: 0 0 0 2em;
+  & li {
+    margin: 0;
+    & :first-child { margin-top: 0; }
+    & :last-child { margin-bottom: 0; }
+  }
+}
+
+/* definition lists */
+dl {
+  clear: left;
+  --indent: 3ch;
+  /* --indent: attr(indent ch); not supported in any browser, but we can dream */
+  &.olPercent {
+    --indent: 5ch;
+    & > dt {
+      min-width: calc(var(--indent) - 2ch);
+    }
+  }
+  &.olPercent > dt {
+    float: none;
+  }
+
+  dl > dd > & {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+  }
+}
+dl:not(.dlNewline) > dt {
+  float: left;
+  margin-right: 2ch;
+  min-width: 8ch;
+}
+dl > dd {
+  margin-bottom: .8em;
+  margin-left: var(--indent) !important; /* stupid element overrides */
+  min-height: 2ex;
+}
+:is(dl.compact, .dlCompact) > dd {
+  margin-bottom: 0;
+  & > :is(:first-child, .break:first-child + *) {
+    margin-top: 0;
+  }
+  & > :is(:last-child) {
+    margin-bottom: 0;
+  }
+}
+:is(dd, span).break {
+  display: none;
+}
+
+/* links */
+a, a[href].selfRef:hover {
+  text-decoration: none;
+}
+a[href] {
+  color: var(--link-color);
+}
+a[href].selfRef, .iref + a[href].internal {
+  color: var(--text-color);
+}
+a[href]:hover {
+  text-decoration: underline;
+}
+a[href].selfRef:hover {
+  background-color: var(--highlight-color);
+}
+a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
+  white-space: nowrap;
+}
+
+/* Figures */
+tt, code, pre {
+  background-color: var(--highlight-color);
+  font: 14px/22px var(--font-mono);
+}
+tt, code {
+  /* changing the font for inline elements leads to different ascender
+     and descender heights; as we want to retain baseline alignment,
+     remove leading to avoid altering the final height of lines
+     note: this fails if these blocks take an entire line,
+     a different solution would be great */
+  line-height: 0;
+}
+:is(h1, h2, h3, h4, h5, h6) :is(tt, code) {
+  font-size: 84%;
+}
+pre {
+  border: 1px solid var(--line-color);
+  font-size: 13.5px;
+  line-height: 16px;
+  letter-spacing: -0.2px;
+  margin: 5px;
+  padding: 5px;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0.5em 0;
+  padding: 0;
+}
+figure blockquote {
+  margin: 0.8em 0.4em 0.4em;
+}
+figcaption, caption {
+  font-style: italic;
+  margin: 0.5em 1.5em;
+  text-align: left;
+  caption-side: bottom;
+}
+@media screen {
+  /* Auto-collapse boilerplate. */
+  :is(#status-of-memo, #copyright) p {
+    margin: -2px 0;
+    max-height: 0;
+    transition: max-height 2s ease, margin 0.5s ease 0.5s;
+    overflow: hidden;
+  }
+  :is(#status-of-memo, #copyright):hover p,
+  :is(#status-of-memo, #copyright) h2:target ~ p {
+    margin: 0.5em 0;
+    max-height: 500px;
+    overflow: auto;
+  }
+  pre, svg {
+    display: inline-block;
+    /* In the horizontal direction, sometimes people make over-sized figures.
+       Scrollbars for those is therefore necessary: auto adds them as necessary..
+       In the vertical direction, the line-height can combine with the font
+       asender/descender height to produce scrollbars: hidden avoids that. */
+    overflow: auto hidden;
+  }
+  pre {
+    max-width: 100%;
+    width: calc(100% - 22px - 1em);
+  }
+  svg {
+    max-width: calc(100% - 22px - 1em);
+  }
+  figure pre {
+    display: block;
+    width: calc(100% - 25px);
+  }
+  :is(pre, svg) + .pilcrow {
+    display: inline-block;
+    vertical-align: text-bottom;
+    padding-bottom: 8px;
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 0 2em;
+  font-style: italic;
+}
+blockquote {
+  margin: 1em 0;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+
+/* tables */
+table {
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+}
+table.right {
+  margin-left: auto;
+}
+table.center {
+  margin-left: auto;
+  margin-right: auto;
+}
+table.left {
+  margin-right: auto;
+}
+table .text-left {
+  text-align: left;
+}
+table .text-center {
+  text-align: center;
+}
+table .text-right {
+  text-align: right;
+}
+
+thead, tbody {
+  border: 1px solid var(--line-color);
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 10px;
+}
+th {
+  background-color: var(--line-color);
+}
+:is(tr:nth-child(2n), thead+tbody > tr:nth-child(2n+1)) > td {
+  background-color: var(--background-color);
+}
+:is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
+  background-color: var(--highlight-color);
+}
+table caption {
+  margin: 0;
+  padding: 3px 0 3px 1em;
+}
+table p {
+  margin: 0;
+}
+
+/* pilcrow */
+a.pilcrow {
+  margin-left: 3px;
+  opacity: 0.2;
+  user-select: none;
+  &[href] {
+    color: var(--pilcrow-weak);
+    &:hover { text-decoration: none; }
+  }
+}
+@media not print {
+  :hover > a.pilcrow {
+    opacity: 1;
+  }
+  a.pilcrow[href]:hover {
+    color: var(--pilcrow-strong);
+    background-color: transparent;
+  }
+}
+@media print {
+  a.pilcrow {
+    display: none;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid var(--line-color);
+}
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: var(--small-font-size);
+}
+.role {
+  font-variant: all-small-caps;
+}
+sub, sup {
+  line-height: 1;
+  font-size: 80%;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: var(--small-font-size);
+  line-height: 18px;
+  --identifier-width: 15ch;
+  & dt {
+    width: var(--identifier-width);
+    min-width: var(--identifier-width);
+    clear: left;
+    float: left;
+    text-align: right;
+    margin-right: 1ch;
+  }
+  & dd {
+    margin: 0;
+    margin-left: calc(1em + var(--identifier-width)) !important;
+    min-width: 5em;
+  }
+  & .authors {
+    & .author {
+      display: inline-block;
+      margin-right: 1.5em;
+    }
+    & .org {
+      font-style: italic;
+    }
+  }
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #999;
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+}
+.docInfo .prepared {
+  float: right;
+}
+
+/* table of contents */
+#toc {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+
+  & nav {
+    & ul {
+      margin: 0 0.5em 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    & li {
+      line-height: 1.3em;
+      margin: 2px 0;
+      padding-left: 1.2em;
+      text-indent: -1.2em;
+    }
+  }
+  & a.xref {
+    white-space: normal;
+  }
+}
+
+.references {
+  & > dt {
+    text-align: right;
+    font-weight: bold;
+    min-width: 10ch;
+    margin-right: 1.5ch;
+    &:target::before {
+      content: "⇒";
+      margin: 0 10px 0 -25px;
+    }
+  }
+  & > dd {
+    margin-left: 12ch !important;
+    overflow: visible;
+    & .refInstance {
+      margin-bottom: 0.8em;
+    }
+    & .ascii {
+      margin-bottom: 0.25em;
+    }
+  }
+}
+
+#rfc\.index\.index + ul {
+  margin-left: 0;
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  max-width: 20em;
+  margin: 1em auto 1em 0;
+
+  & .nameRole {
+    font-weight: 700;
+    margin-left: 0;
+  }
+  & .label {
+    margin: 0.5em 0;
+  }
+  & .type {
+    display: none;
+  }
+  & .alternative-contact {
+    margin: 0.5em 0 0.25em 0;
+  }
+  & .non-ascii {
+    margin: 0 0 0 2em;
+  }
+  & div.left {
+    text-align: left;
+  }
+  & div.right {
+    text-align: right;
+  }
+}
+
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+@media (min-width: 500px) {
+  #authors-addresses > section {
+    column-count: 2;
+    column-gap: 20px;
+  }
+  #authors-addresses > section > h2 {
+    column-span: all;
+  }
+  /* hack for break-inside: avoid-column */
+  #authors-addresses address {
+    display: inline-block;
+    break-inside: avoid-column;
+  }
+}
+
+/* Comments */
+.rfcEditorRemove p:first-of-type {
+  font-style: italic;
+}
+.cref {
+  background-color: rgba(249, 232, 105, 0.3);
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+
+@media screen {
+  #toc nav {
+    font-family: var(--font-title);
+    font-weight: 360;
+    & > ul { margin-bottom: 2em; }
+    & ul {
+      margin: 0 0 0 4px;
+      & :is(p, li) {
+        margin: 2px 0;
+      }
+    }
+  }
+  #toc a.toplink {
+    float: right;
+  }
+}
+@media not screen {
+  #toc a.toplink {
+    display: none;
+  }
+}
+
+
+/* TOC layout for smaller screens */
+@media screen and (max-width: 929px) {
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 1px 0 0 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+    opacity: 0.6;
+  }
+  #toc h2 {
+    margin: 0;
+    padding: 2px 0 2px 6px;
+    padding-right: 1em;
+    font-size: 18px;
+    line-height: 24px;
+    min-width: 190px;
+    text-align: right;
+    background-color: #444;
+    color: white;
+    cursor: pointer;
+    &::before { /* css hamburger */
+      float: right;
+      position: relative;
+      width: 1em;
+      height: 1px;
+      left: -164px;
+      margin: 8px 0 0 0;
+      background: white none repeat scroll 0 0;
+      box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+      content: "";
+    }
+  }
+  #toc nav {
+    display: none;
+    background-color: var(--background-color);
+    padding: 0.5em 1em 1em;
+    overflow: auto;
+    overscroll-behavior: contain;
+    height: calc(100vh - 48px);
+    border-left: 1px solid #ddd;
+  }
+  #toc.active {
+    opacity: 1;
+    & nav { display: block; }
+  }
+  /* Make the collapsed ToC header render white on gray also when it's a link */
+  #toc h2 a,
+  #toc h2 a:is(:link, :focus, :hover),
+  #toc a.toplink,
+  #toc a.toplink:hover {
+    color: white;
+    background-color: #444;
+    text-decoration: none;
+  }
+  #toc a.toplink {
+    margin: 2px 0.5em 0;
+  }
+}
+
+/* TOC layout for wide screens */
+@media screen and (min-width: 930px) {
+  body {
+    padding-right: 360px;
+    padding-right: calc(min(180px + 20%, 500px));
+  }
+  #toc {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    right: calc(50vw - 480px);
+    width: 312px;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+  }
+  #toc h2 {
+    margin: 0;
+    padding: 0.25em 1em 1em 0;
+  }
+  #toc nav {
+    display: block;
+    height: calc(90vh - 84px);
+    bottom: 0;
+    padding: 0.5em 0 2em;
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+  #toc a.toplink {
+    margin: 8px 0.5em 0;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc, #n-introduction {
+    page-break-before: always;
+  }
+  #toc {
+    border-top: none;
+    padding-top: 0;
+  }
+  figure, pre, .vcard {
+    page-break-inside: avoid;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  :is(h2, h3, h4, h5, h6)+*, dd {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+}
+
+/* Dark mode. */
+@media (prefers-color-scheme: dark) {
+:root {
+  --background-color: #121212;
+  --text-color: #f0f0f0;
+  --title-color: #fff;
+  --link-color: #4da4f0;
+  --highlight-color: #282828;
+  --line-color: #444;
+  --pilcrow-weak: #444;
+  --pilcrow-strong: #666;
+  scrollbar-color: #777 #333;
+}
+}
+
+/* SVG Trick: a prefix match works because only black and white are allowed */
+svg :is([stroke="black"], [stroke^="#000"]) {
+  stroke: var(--text-color);
+}
+svg :is([stroke="white"], [stroke^="#fff"]) {
+  stroke: var(--background-color);
+}
+svg :is([fill="black"], [fill^="#000"], :not([fill])) {
+  fill: var(--text-color);
+}
+svg :is([fill="white"], [fill^="#fff"]) {
+  fill: var(--background-color);
+}
+</style>
+
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">p11-kit RPC</td>
+<td class="right">January 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Ueno</td>
+<td class="center">Expires 21 July 2026</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">Network Working Group</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-ueno-pkcs11-rpc-latest</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-01-17" class="published">17 January 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Informational</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2026-07-21">21 July 2026</time></dd>
+<dt class="label-authors">Author:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">D. Ueno</div>
+<div class="org">Red Hat, Inc.</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">p11-kit RPC Protocol Specification</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">This document specifies the p11-kit RPC (Remote Procedure Call) protocol, which enables remote access to PKCS#11 cryptographic modules. The protocol is designed for local communication scenarios such as forwarding PKCS#11 modules into sandboxed environments, accessing remote modules over SSH, and enabling inter-process communication between applications and cryptographic service providers. Unlike general-purpose key management protocols such as KMIP, the p11-kit RPC protocol prioritizes minimal overhead and faithful representation of PKCS#11 semantics.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 21 July 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
+                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-relationship-to-other-proto" class="internal xref">Relationship to Other Protocols</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.2">
+                <p id="section-toc.1-1.1.2.2.1" class="keepWithNext"><a href="#section-1.2" class="auto internal xref">1.2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-protocol-overview" class="internal xref">Protocol Overview</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.1">
+                <p id="section-toc.1-1.2.2.1.1"><a href="#section-2.1" class="auto internal xref">2.1</a>.  <a href="#name-architecture" class="internal xref">Architecture</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-transport-layer" class="internal xref">Transport Layer</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
+                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-pipe-transport-exec" class="internal xref">Pipe Transport (exec)</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-unix-domain-socket-transpor" class="internal xref">Unix Domain Socket Transport</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
+                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-vsock-transport" class="internal xref">VSOCK Transport</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-version-negotiation" class="internal xref">Version Negotiation</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-protocol-versions" class="internal xref">Protocol Versions</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-negotiation-procedure" class="internal xref">Negotiation Procedure</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2.2.1">
+                    <p id="section-toc.1-1.4.2.2.2.1.1"><a href="#section-4.2.1" class="auto internal xref">4.2.1</a>.  <a href="#name-example-successful-negotiat" class="internal xref">Example: Successful Negotiation</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2.2.2">
+                    <p id="section-toc.1-1.4.2.2.2.2.1"><a href="#section-4.2.2" class="auto internal xref">4.2.2</a>.  <a href="#name-example-downgrade-to-versio" class="internal xref">Example: Downgrade to Version 1</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2.2.3">
+                    <p id="section-toc.1-1.4.2.2.2.3.1"><a href="#section-4.2.3" class="auto internal xref">4.2.3</a>.  <a href="#name-example-fallback-for-legacy" class="internal xref">Example: Fallback for Legacy Server</a></p>
+</li>
+                </ul>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-message-format" class="internal xref">Message Format</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-message-header" class="internal xref">Message Header</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-options-area" class="internal xref">Options Area</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3">
+                <p id="section-toc.1-1.5.2.3.1"><a href="#section-5.3" class="auto internal xref">5.3</a>.  <a href="#name-message-body" class="internal xref">Message Body</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3.2.1">
+                    <p id="section-toc.1-1.5.2.3.2.1.1"><a href="#section-5.3.1" class="auto internal xref">5.3.1</a>.  <a href="#name-request-message-body" class="internal xref">Request Message Body</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3.2.2">
+                    <p id="section-toc.1-1.5.2.3.2.2.1"><a href="#section-5.3.2" class="auto internal xref">5.3.2</a>.  <a href="#name-response-message-body" class="internal xref">Response Message Body</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.4">
+                <p id="section-toc.1-1.5.2.4.1"><a href="#section-5.4" class="auto internal xref">5.4</a>.  <a href="#name-call-codes" class="internal xref">Call Codes</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-serialization-format" class="internal xref">Serialization Format</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-type-signatures" class="internal xref">Type Signatures</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1.2.1">
+                    <p id="section-toc.1-1.6.2.1.2.1.1"><a href="#section-6.1.1" class="auto internal xref">6.1.1</a>.  <a href="#name-prefix-notation" class="internal xref">Prefix Notation</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
+                <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-primitive-types" class="internal xref">Primitive Types</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2.2.1">
+                    <p id="section-toc.1-1.6.2.2.2.1.1"><a href="#section-6.2.1" class="auto internal xref">6.2.1</a>.  <a href="#name-ck_byte-type-y" class="internal xref">CK_BYTE (type 'y')</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2.2.2">
+                    <p id="section-toc.1-1.6.2.2.2.2.1"><a href="#section-6.2.2" class="auto internal xref">6.2.2</a>.  <a href="#name-ck_ulong-type-u" class="internal xref">CK_ULONG (type 'u')</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2.2.3">
+                    <p id="section-toc.1-1.6.2.2.2.3.1"><a href="#section-6.2.3" class="auto internal xref">6.2.3</a>.  <a href="#name-ck_version-type-v" class="internal xref">CK_VERSION (type 'v')</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
+                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-string-types" class="internal xref">String Types</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3.2.1">
+                    <p id="section-toc.1-1.6.2.3.2.1.1"><a href="#section-6.3.1" class="auto internal xref">6.3.1</a>.  <a href="#name-null-terminated-string-type" class="internal xref">Null-terminated String (type 'z')</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3.2.2">
+                    <p id="section-toc.1-1.6.2.3.2.2.1"><a href="#section-6.3.2" class="auto internal xref">6.3.2</a>.  <a href="#name-space-padded-string-type-s" class="internal xref">Space-padded String (type 's')</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4">
+                <p id="section-toc.1-1.6.2.4.1"><a href="#section-6.4" class="auto internal xref">6.4</a>.  <a href="#name-array-types" class="internal xref">Array Types</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4.2.1">
+                    <p id="section-toc.1-1.6.2.4.2.1.1"><a href="#section-6.4.1" class="auto internal xref">6.4.1</a>.  <a href="#name-byte-array-type-ay" class="internal xref">Byte Array (type 'ay')</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4.2.2">
+                    <p id="section-toc.1-1.6.2.4.2.2.1"><a href="#section-6.4.2" class="auto internal xref">6.4.2</a>.  <a href="#name-ulong-array-type-au" class="internal xref">ULONG Array (type 'au')</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.5">
+                <p id="section-toc.1-1.6.2.5.1"><a href="#section-6.5" class="auto internal xref">6.5</a>.  <a href="#name-complex-types" class="internal xref">Complex Types</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.5.2.1">
+                    <p id="section-toc.1-1.6.2.5.2.1.1"><a href="#section-6.5.1" class="auto internal xref">6.5.1</a>.  <a href="#name-ck_mechanism-type-m" class="internal xref">CK_MECHANISM (type 'M')</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.5.2.2">
+                    <p id="section-toc.1-1.6.2.5.2.2.1"><a href="#section-6.5.2" class="auto internal xref">6.5.2</a>.  <a href="#name-ck_attribute-type-a" class="internal xref">CK_ATTRIBUTE (type 'A')</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.5.2.3">
+                    <p id="section-toc.1-1.6.2.5.2.3.1"><a href="#section-6.5.3" class="auto internal xref">6.5.3</a>.  <a href="#name-attribute-buffer-type-fa" class="internal xref">Attribute Buffer (type 'fA')</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.6">
+                <p id="section-toc.1-1.6.2.6.1"><a href="#section-6.6" class="auto internal xref">6.6</a>.  <a href="#name-variable-length-output-conv" class="internal xref">Variable-Length Output Convention</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-function-call-mappings" class="internal xref">Function Call Mappings</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-call-identifiers" class="internal xref">Call Identifiers</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
+                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-example-function-mappings" class="internal xref">Example Function Mappings</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2.2.1">
+                    <p id="section-toc.1-1.7.2.2.2.1.1"><a href="#section-7.2.1" class="auto internal xref">7.2.1</a>.  <a href="#name-c_getmechanismlist" class="internal xref">C_GetMechanismList</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2.2.2">
+                    <p id="section-toc.1-1.7.2.2.2.2.1"><a href="#section-7.2.2" class="auto internal xref">7.2.2</a>.  <a href="#name-c_getattributevalue" class="internal xref">C_GetAttributeValue</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2.2.3">
+                    <p id="section-toc.1-1.7.2.2.2.3.1"><a href="#section-7.2.3" class="auto internal xref">7.2.3</a>.  <a href="#name-c_encrypt" class="internal xref">C_Encrypt</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.3">
+                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-pkcs11-30-functions-version" class="internal xref">PKCS#11 3.0 Functions (Version 1+)</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.4">
+                <p id="section-toc.1-1.7.2.4.1"><a href="#section-7.4" class="auto internal xref">7.4</a>.  <a href="#name-extended-functions-version-" class="internal xref">Extended Functions (Version 2+)</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.4.2.1">
+                    <p id="section-toc.1-1.7.2.4.2.1.1"><a href="#section-7.4.1" class="auto internal xref">7.4.1</a>.  <a href="#name-c_inittoken2-call-id-80" class="internal xref">C_InitToken2 (call ID 80)</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.4.2.2">
+                    <p id="section-toc.1-1.7.2.4.2.2.1"><a href="#section-7.4.2" class="auto internal xref">7.4.2</a>.  <a href="#name-c_derivekey2-call-id-81" class="internal xref">C_DeriveKey2 (call ID 81)</a></p>
+</li>
+                </ul>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-protocol-version-difference" class="internal xref">Protocol Version Differences</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
+                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-version-0" class="internal xref">Version 0</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
+                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-version-1" class="internal xref">Version 1</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3">
+                <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-version-2" class="internal xref">Version 2</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-error-handling" class="internal xref">Error Handling</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
+                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-pkcs11-return-codes" class="internal xref">PKCS#11 Return Codes</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
+                <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-protocol-errors" class="internal xref">Protocol Errors</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2.2.1">
+                    <p id="section-toc.1-1.9.2.2.2.1.1"><a href="#section-9.2.1" class="auto internal xref">9.2.1</a>.  <a href="#name-parse-errors" class="internal xref">Parse Errors</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2.2.2">
+                    <p id="section-toc.1-1.9.2.2.2.2.1"><a href="#section-9.2.2" class="auto internal xref">9.2.2</a>.  <a href="#name-version-negotiation-failure" class="internal xref">Version Negotiation Failure</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2.2.3">
+                    <p id="section-toc.1-1.9.2.2.2.3.1"><a href="#section-9.2.3" class="auto internal xref">9.2.3</a>.  <a href="#name-transport-errors" class="internal xref">Transport Errors</a></p>
+</li>
+                </ul>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
+                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-authentication" class="internal xref">Authentication</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2">
+                <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-confidentiality-and-integri" class="internal xref">Confidentiality and Integrity</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.3">
+                <p id="section-toc.1-1.10.2.3.1"><a href="#section-10.3" class="auto internal xref">10.3</a>.  <a href="#name-sandboxing" class="internal xref">Sandboxing</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.4">
+                <p id="section-toc.1-1.10.2.4.1"><a href="#section-10.4" class="auto internal xref">10.4</a>.  <a href="#name-sensitive-data" class="internal xref">Sensitive Data</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.5">
+                <p id="section-toc.1-1.10.2.5.1"><a href="#section-10.5" class="auto internal xref">10.5</a>.  <a href="#name-input-validation" class="internal xref">Input Validation</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref">12</a>. <a href="#name-implementation-consideratio" class="internal xref">Implementation Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.1">
+                <p id="section-toc.1-1.12.2.1.1"><a href="#section-12.1" class="auto internal xref">12.1</a>.  <a href="#name-endianness-and-data-models" class="internal xref">Endianness and Data Models</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.2">
+                <p id="section-toc.1-1.12.2.2.1"><a href="#section-12.2" class="auto internal xref">12.2</a>.  <a href="#name-buffer-management" class="internal xref">Buffer Management</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.3">
+                <p id="section-toc.1-1.12.2.3.1"><a href="#section-12.3" class="auto internal xref">12.3</a>.  <a href="#name-mechanism-parameter-handlin" class="internal xref">Mechanism Parameter Handling</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.4">
+                <p id="section-toc.1-1.12.2.4.1"><a href="#section-12.4" class="auto internal xref">12.4</a>.  <a href="#name-threading-and-concurrency" class="internal xref">Threading and Concurrency</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.5">
+                <p id="section-toc.1-1.12.2.5.1"><a href="#section-12.5" class="auto internal xref">12.5</a>.  <a href="#name-performance-optimization" class="internal xref">Performance Optimization</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#section-13" class="auto internal xref">13</a>. <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.1">
+                <p id="section-toc.1-1.13.2.1.1"><a href="#section-13.1" class="auto internal xref">13.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.2">
+                <p id="section-toc.1-1.13.2.2.1"><a href="#section-13.2" class="auto internal xref">13.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
+            <p id="section-toc.1-1.14.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
+            <p id="section-toc.1-1.15.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-complete-function-signature" class="internal xref">Complete Function Signature Table</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16">
+            <p id="section-toc.1-1.16.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">PKCS#11 <span>[<a href="#PKCS11-v2.40" class="cite xref">PKCS11-v2.40</a>]</span> <span>[<a href="#PKCS11-v3.1" class="cite xref">PKCS11-v3.1</a>]</span> defines a platform-independent API (Cryptoki) for cryptographic tokens. Traditionally, PKCS#11 modules are loaded as shared libraries (via <code>dlopen</code> on Unix or <code>LoadLibrary</code> on Windows) within the same process address space as the calling application. However, several use cases require remote access to PKCS#11 functionality:<a href="#section-1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1-2.1">
+          <p id="section-1-2.1.1">Forwarding system trust stores into flatpak sandboxes<a href="#section-1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-2.2">
+          <p id="section-1-2.2.1">Sandboxing proprietary PKCS#11 modules using bubblewrap or similar isolation tools<a href="#section-1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-2.3">
+          <p id="section-1-2.3.1">Accessing PKCS#11 modules over SSH connections<a href="#section-1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-2.4">
+          <p id="section-1-2.4.1">Delegating cryptographic operations from inside enclaves to host systems<a href="#section-1-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-2.5">
+          <p id="section-1-2.5.1">Implementing PKCS#11 modules in foreign languages (e.g., Go, Rust) with process isolation<a href="#section-1-2.5.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-1-3">The p11-kit RPC protocol addresses these use cases by providing a wire protocol that faithfully represents PKCS#11 function calls and their semantics.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<div id="relationship-to-other-protocols">
+<section id="section-1.1">
+        <h3 id="name-relationship-to-other-proto">
+<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-relationship-to-other-proto" class="section-name selfRef">Relationship to Other Protocols</a>
+        </h3>
+<p id="section-1.1-1">While KMIP <span>[<a href="#KMIP" class="cite xref">KMIP</a>]</span> provides a comprehensive protocol for key management operations, the p11-kit RPC protocol serves a different purpose:<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1.1-2.1">
+            <p id="section-1.1-2.1.1"><strong>Scope</strong>: p11-kit RPC is specifically designed for exposing existing PKCS#11 modules over a communication channel, whereas KMIP is a general-purpose key management protocol<a href="#section-1.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-1.1-2.2">
+            <p id="section-1.1-2.2.1"><strong>Design Goals</strong>: p11-kit RPC prioritizes minimal overhead and faithful PKCS#11 semantics, making it suitable for local IPC scenarios<a href="#section-1.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-1.1-2.3">
+            <p id="section-1.1-2.3.1"><strong>Use Cases</strong>: p11-kit RPC is optimized for scenarios like sandbox forwarding and SSH tunneling, where existing PKCS#11 modules need to be accessed remotely without translation<a href="#section-1.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-1.1-3">The protocol does not aim to be a general-purpose key management protocol or to provide features beyond what PKCS#11 itself offers.<a href="#section-1.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="conventions-and-definitions">
+<section id="section-1.2">
+        <h3 id="name-conventions-and-definitions">
+<a href="#section-1.2" class="section-number selfRef">1.2. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
+        </h3>
+<p id="section-1.2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-1.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="protocol-overview">
+<section id="section-2">
+      <h2 id="name-protocol-overview">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-protocol-overview" class="section-name selfRef">Protocol Overview</a>
+      </h2>
+<p id="section-2-1">The p11-kit RPC protocol is a simple request-response protocol that serializes PKCS#11 function calls and their arguments into binary messages transmitted over a bidirectional byte stream (typically stdin/stdout, Unix domain sockets, or VSOCK sockets).<a href="#section-2-1" class="pilcrow">¶</a></p>
+<div id="architecture">
+<section id="section-2.1">
+        <h3 id="name-architecture">
+<a href="#section-2.1" class="section-number selfRef">2.1. </a><a href="#name-architecture" class="section-name selfRef">Architecture</a>
+        </h3>
+<p id="section-2.1-1">The protocol consists of:<a href="#section-2.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-2.1-2">
+<li id="section-2.1-2.1">
+            <p id="section-2.1-2.1.1"><strong>Transport Layer</strong>: Provides a reliable bidirectional byte stream<a href="#section-2.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-2.1-2.2">
+            <p id="section-2.1-2.2.1"><strong>Message Layer</strong>: Defines message framing and serialization<a href="#section-2.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-2.1-2.3">
+            <p id="section-2.1-2.3.1"><strong>Call Layer</strong>: Maps PKCS#11 functions to RPC calls<a href="#section-2.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-2.1-2.4">
+            <p id="section-2.1-2.4.1"><strong>Version Negotiation</strong>: Allows clients and servers to agree on protocol capabilities<a href="#section-2.1-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<div class="alignLeft art-text artwork" id="section-2.1-3">
+<pre>
+┌─────────────────────────────────────────────┐
+│          PKCS#11 Application                │
+└─────────────────┬───────────────────────────┘
+                  │ PKCS#11 API
+┌─────────────────▼───────────────────────────┐
+│          p11-kit RPC Client                 │
+└─────────────────┬───────────────────────────┘
+                  │ RPC Protocol
+                  │ (over transport)
+┌─────────────────▼───────────────────────────┐
+│          p11-kit RPC Server                 │
+└─────────────────┬───────────────────────────┘
+                  │ PKCS#11 API
+┌─────────────────▼───────────────────────────┐
+│     PKCS#11 Module (e.g., SoftHSM)          │
+└─────────────────────────────────────────────┘
+</pre><a href="#section-2.1-3" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="transport-layer">
+<section id="section-3">
+      <h2 id="name-transport-layer">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-transport-layer" class="section-name selfRef">Transport Layer</a>
+      </h2>
+<p id="section-3-1">The protocol operates over a reliable, ordered, bidirectional byte stream. Three transport mechanisms are commonly used:<a href="#section-3-1" class="pilcrow">¶</a></p>
+<div id="pipe-transport-exec">
+<section id="section-3.1">
+        <h3 id="name-pipe-transport-exec">
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-pipe-transport-exec" class="section-name selfRef">Pipe Transport (exec)</a>
+        </h3>
+<p id="section-3.1-1">The client launches a server process and communicates via stdin/stdout pipes. The remote specification begins with <code>|</code> followed by a command line:<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.1-2">
+<pre>
+|ssh user@remote p11-kit remote /path/to/module.so
+</pre><a href="#section-3.1-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="unix-domain-socket-transport">
+<section id="section-3.2">
+        <h3 id="name-unix-domain-socket-transpor">
+<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-unix-domain-socket-transpor" class="section-name selfRef">Unix Domain Socket Transport</a>
+        </h3>
+<p id="section-3.2-1">The client connects to a server listening on a Unix domain socket. The remote specification uses the format:<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.2-2">
+<pre>
+unix:path=/path/to/socket
+</pre><a href="#section-3.2-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="vsock-transport">
+<section id="section-3.3">
+        <h3 id="name-vsock-transport">
+<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-vsock-transport" class="section-name selfRef">VSOCK Transport</a>
+        </h3>
+<p id="section-3.3-1">For virtual machine scenarios, the protocol can operate over VSOCK sockets:<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.3-2">
+<pre>
+vsock:cid=CID;port=PORT
+</pre><a href="#section-3.3-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="version-negotiation">
+<section id="section-4">
+      <h2 id="name-version-negotiation">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-version-negotiation" class="section-name selfRef">Version Negotiation</a>
+      </h2>
+<p id="section-4-1">The protocol supports version negotiation to enable backward compatibility and feature evolution. The negotiation occurs immediately after transport establishment and before any PKCS#11 operations.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<div id="protocol-versions">
+<section id="section-4.1">
+        <h3 id="name-protocol-versions">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-protocol-versions" class="section-name selfRef">Protocol Versions</a>
+        </h3>
+<p id="section-4.1-1">The following protocol versions are defined:<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4.1-2.1">
+            <p id="section-4.1-2.1.1"><strong>Version 0</strong>: Initial version supporting PKCS#11 2.x functions<a href="#section-4.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.1-2.2">
+            <p id="section-4.1-2.2.1"><strong>Version 1</strong>: Adds PKCS#11 3.0 functions (message-based encryption, C_LoginUser, C_SessionCancel)<a href="#section-4.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.1-2.3">
+            <p id="section-4.1-2.3.1"><strong>Version 2</strong>: Adds functions with mechanism parameter updates (C_InitToken2, C_DeriveKey2)<a href="#section-4.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="negotiation-procedure">
+<section id="section-4.2">
+        <h3 id="name-negotiation-procedure">
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-negotiation-procedure" class="section-name selfRef">Negotiation Procedure</a>
+        </h3>
+<p id="section-4.2-1">The version negotiation follows a challenge-and-reconnect approach for transports that support reconnection:<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-4.2-2">
+<li id="section-4.2-2.1">
+            <p id="section-4.2-2.1.1">Client sends a single byte containing its maximum supported version<a href="#section-4.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.2-2.2">
+            <p id="section-4.2-2.2.1">Server receives the client version byte<a href="#section-4.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.2-2.3">
+            <p id="section-4.2-2.3.1">Server determines the negotiated version:<a href="#section-4.2-2.3.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4.2-2.3.2.1">
+                <p id="section-4.2-2.3.2.1.1">If client version &gt; server maximum: use server maximum<a href="#section-4.2-2.3.2.1.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-4.2-2.3.2.2">
+                <p id="section-4.2-2.3.2.2.1">Otherwise: use client version<a href="#section-4.2-2.3.2.2.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+</li>
+          <li id="section-4.2-2.4">
+            <p id="section-4.2-2.4.1">Server sends a single byte containing the negotiated version<a href="#section-4.2-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.2-2.5">
+            <p id="section-4.2-2.5.1">Client receives negotiated version byte<a href="#section-4.2-2.5.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-4.2-3">If the server does not support version negotiation (i.e., only supports version 0), it will not respond correctly to non-zero version bytes. In this case:<a href="#section-4.2-3" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-4.2-4">
+<li id="section-4.2-4.1">
+            <p id="section-4.2-4.1.1">Client detects negotiation failure<a href="#section-4.2-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.2-4.2">
+            <p id="section-4.2-4.2.1">Client disconnects from server<a href="#section-4.2-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.2-4.3">
+            <p id="section-4.2-4.3.1">Client reconnects to server<a href="#section-4.2-4.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.2-4.4">
+            <p id="section-4.2-4.4.1">Client sends version byte 0<a href="#section-4.2-4.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.2-4.5">
+            <p id="section-4.2-4.5.1">Server acknowledges with version byte 0<a href="#section-4.2-4.5.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<div id="example-successful-negotiation">
+<section id="section-4.2.1">
+          <h4 id="name-example-successful-negotiat">
+<a href="#section-4.2.1" class="section-number selfRef">4.2.1. </a><a href="#name-example-successful-negotiat" class="section-name selfRef">Example: Successful Negotiation</a>
+          </h4>
+<div class="alignLeft art-text artwork" id="section-4.2.1-1">
+<pre>
+Client                           Server
+   |                                |
+   |------- Version 2 (0x02) ------&gt;|
+   |                                | (Server max = 2)
+   |&lt;------ Version 2 (0x02) -------|
+   |                                |
+</pre><a href="#section-4.2.1-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="example-downgrade-to-version-1">
+<section id="section-4.2.2">
+          <h4 id="name-example-downgrade-to-versio">
+<a href="#section-4.2.2" class="section-number selfRef">4.2.2. </a><a href="#name-example-downgrade-to-versio" class="section-name selfRef">Example: Downgrade to Version 1</a>
+          </h4>
+<div class="alignLeft art-text artwork" id="section-4.2.2-1">
+<pre>
+Client                           Server
+   |                                |
+   |------- Version 2 (0x02) ------&gt;|
+   |                                | (Server max = 1)
+   |&lt;------ Version 1 (0x01) -------|
+   |                                |
+</pre><a href="#section-4.2.2-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="example-fallback-for-legacy-server">
+<section id="section-4.2.3">
+          <h4 id="name-example-fallback-for-legacy">
+<a href="#section-4.2.3" class="section-number selfRef">4.2.3. </a><a href="#name-example-fallback-for-legacy" class="section-name selfRef">Example: Fallback for Legacy Server</a>
+          </h4>
+<div class="alignLeft art-text artwork" id="section-4.2.3-1">
+<pre>
+Client                           Server (v0 only)
+   |                                |
+   |------- Version 2 (0x02) ------&gt;|
+   |                                | (No response or error)
+   | &lt;-- (Connection Error) --------|
+   |                                |
+   |---- Reconnect ----------------&gt;|
+   |                                |
+   |------- Version 0 (0x00) ------&gt;|
+   |&lt;------ Version 0 (0x00) -------|
+   |                                |
+</pre><a href="#section-4.2.3-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="message-format">
+<section id="section-5">
+      <h2 id="name-message-format">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-message-format" class="section-name selfRef">Message Format</a>
+      </h2>
+<p id="section-5-1">All RPC messages follow a consistent framing format consisting of a header, optional options area, and message body.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<div id="message-header">
+<section id="section-5.1">
+        <h3 id="name-message-header">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-message-header" class="section-name selfRef">Message Header</a>
+        </h3>
+<p id="section-5.1-1">Each message begins with a 12-byte header:<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-5.1-2">
+<pre>
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                           Call Code                           |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                        Options Length                         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                         Buffer Length                         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</pre><a href="#section-5.1-2" class="pilcrow">¶</a>
+</div>
+<p id="section-5.1-3">Where:<a href="#section-5.1-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.1-4.1">
+            <p id="section-5.1-4.1.1"><strong>Call Code</strong> (4 bytes): Unsigned 32-bit integer identifying the function call or response. For requests, this identifies the PKCS#11 function. For responses, this echoes the call code from the request.<a href="#section-5.1-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.1-4.2">
+            <p id="section-5.1-4.2.1"><strong>Options Length</strong> (4 bytes): Length in bytes of the options area<a href="#section-5.1-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.1-4.3">
+            <p id="section-5.1-4.3.1"><strong>Buffer Length</strong> (4 bytes): Length in bytes of the message body<a href="#section-5.1-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-5.1-5">All multi-byte integers are encoded in network byte order (big-endian).<a href="#section-5.1-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="options-area">
+<section id="section-5.2">
+        <h3 id="name-options-area">
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-options-area" class="section-name selfRef">Options Area</a>
+        </h3>
+<p id="section-5.2-1">The options area contains transport-specific metadata. In the current implementation, it typically contains the module name for multi-module scenarios. The format of the options area is implementation-defined.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="message-body">
+<section id="section-5.3">
+        <h3 id="name-message-body">
+<a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-message-body" class="section-name selfRef">Message Body</a>
+        </h3>
+<p id="section-5.3-1">The message body contains the serialized function arguments (for requests) or return values (for responses).<a href="#section-5.3-1" class="pilcrow">¶</a></p>
+<div id="request-message-body">
+<section id="section-5.3.1">
+          <h4 id="name-request-message-body">
+<a href="#section-5.3.1" class="section-number selfRef">5.3.1. </a><a href="#name-request-message-body" class="section-name selfRef">Request Message Body</a>
+          </h4>
+<p id="section-5.3.1-1">Request messages consist of:<a href="#section-5.3.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.3.1-2">
+<li id="section-5.3.1-2.1">
+              <p id="section-5.3.1-2.1.1">Call ID (4 bytes): Identifies the PKCS#11 function<a href="#section-5.3.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-5.3.1-2.2">
+              <p id="section-5.3.1-2.2.1">Signature (variable): Null-terminated signature string<a href="#section-5.3.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-5.3.1-2.3">
+              <p id="section-5.3.1-2.3.1">Arguments (variable): Serialized function arguments according to the signature<a href="#section-5.3.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ol>
+</section>
+</div>
+<div id="response-message-body">
+<section id="section-5.3.2">
+          <h4 id="name-response-message-body">
+<a href="#section-5.3.2" class="section-number selfRef">5.3.2. </a><a href="#name-response-message-body" class="section-name selfRef">Response Message Body</a>
+          </h4>
+<p id="section-5.3.2-1">Response messages consist of:<a href="#section-5.3.2-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.3.2-2">
+<li id="section-5.3.2-2.1">
+              <p id="section-5.3.2-2.1.1">Call ID (4 bytes): Echo of the request call ID<a href="#section-5.3.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-5.3.2-2.2">
+              <p id="section-5.3.2-2.2.1">Signature (variable): Null-terminated signature string<a href="#section-5.3.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-5.3.2-2.3">
+              <p id="section-5.3.2-2.3.1">Return values (variable): Serialized return values according to the signature<a href="#section-5.3.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ol>
+</section>
+</div>
+</section>
+</div>
+<div id="call-codes">
+<section id="section-5.4">
+        <h3 id="name-call-codes">
+<a href="#section-5.4" class="section-number selfRef">5.4. </a><a href="#name-call-codes" class="section-name selfRef">Call Codes</a>
+        </h3>
+<p id="section-5.4-1">Call codes are monotonically increasing integers assigned by the client for request-response matching. The server <span class="bcp14">MUST</span> echo the call code in the response.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="serialization-format">
+<section id="section-6">
+      <h2 id="name-serialization-format">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-serialization-format" class="section-name selfRef">Serialization Format</a>
+      </h2>
+<p id="section-6-1">The protocol uses a type-signature based serialization format inspired by the D-Bus message format <span>[<a href="#DBUS" class="cite xref">DBUS</a>]</span>. Each PKCS#11 function has associated request and response signatures that define the types and order of arguments.<a href="#section-6-1" class="pilcrow">¶</a></p>
+<div id="type-signatures">
+<section id="section-6.1">
+        <h3 id="name-type-signatures">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-type-signatures" class="section-name selfRef">Type Signatures</a>
+        </h3>
+<p id="section-6.1-1">The following type codes are defined:<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-1">
+          <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Code</th>
+              <th class="text-left" rowspan="1" colspan="1">Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>a_</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Prefix denoting array of type <code>_</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>A</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">CK_ATTRIBUTE</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>f_</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Prefix denoting buffer for type <code>_</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>M</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">CK_MECHANISM</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>P</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Mechanism parameter (updated)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>u</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">CK_ULONG</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>s</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Space-padded string</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>v</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">CK_VERSION</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>y</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">CK_BYTE</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>z</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Null-terminated string</td>
+            </tr>
+          </tbody>
+        </table>
+<div id="prefix-notation">
+<section id="section-6.1.1">
+          <h4 id="name-prefix-notation">
+<a href="#section-6.1.1" class="section-number selfRef">6.1.1. </a><a href="#name-prefix-notation" class="section-name selfRef">Prefix Notation</a>
+          </h4>
+<ul class="normal">
+<li class="normal" id="section-6.1.1-1.1">
+              <p id="section-6.1.1-1.1.1"><code>a_</code>: Array of type <code>_</code>. The serialization includes a count followed by elements.<a href="#section-6.1.1-1.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-1.2">
+              <p id="section-6.1.1-1.2.1"><code>f_</code>: Buffer for type <code>_</code>. Used for output parameters where the buffer size is negotiated using the PKCS#11 convention (NULL pointer to query size, then actual buffer).<a href="#section-6.1.1-1.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="primitive-types">
+<section id="section-6.2">
+        <h3 id="name-primitive-types">
+<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-primitive-types" class="section-name selfRef">Primitive Types</a>
+        </h3>
+<div id="ckbyte-type-y">
+<section id="section-6.2.1">
+          <h4 id="name-ck_byte-type-y">
+<a href="#section-6.2.1" class="section-number selfRef">6.2.1. </a><a href="#name-ck_byte-type-y" class="section-name selfRef">CK_BYTE (type 'y')</a>
+          </h4>
+<p id="section-6.2.1-1">Serialized as a single byte.<a href="#section-6.2.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="ckulong-type-u">
+<section id="section-6.2.2">
+          <h4 id="name-ck_ulong-type-u">
+<a href="#section-6.2.2" class="section-number selfRef">6.2.2. </a><a href="#name-ck_ulong-type-u" class="section-name selfRef">CK_ULONG (type 'u')</a>
+          </h4>
+<p id="section-6.2.2-1">Serialized as a 32-bit unsigned integer in network byte order. Despite PKCS#11 defining CK_ULONG as potentially 64-bit on some platforms, the RPC protocol uses 32-bit encoding for portability across different data models (LP64, LLP64, etc.).<a href="#section-6.2.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="ckversion-type-v">
+<section id="section-6.2.3">
+          <h4 id="name-ck_version-type-v">
+<a href="#section-6.2.3" class="section-number selfRef">6.2.3. </a><a href="#name-ck_version-type-v" class="section-name selfRef">CK_VERSION (type 'v')</a>
+          </h4>
+<p id="section-6.2.3-1">Serialized as two bytes: major version followed by minor version.<a href="#section-6.2.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="string-types">
+<section id="section-6.3">
+        <h3 id="name-string-types">
+<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-string-types" class="section-name selfRef">String Types</a>
+        </h3>
+<div id="null-terminated-string-type-z">
+<section id="section-6.3.1">
+          <h4 id="name-null-terminated-string-type">
+<a href="#section-6.3.1" class="section-number selfRef">6.3.1. </a><a href="#name-null-terminated-string-type" class="section-name selfRef">Null-terminated String (type 'z')</a>
+          </h4>
+<p id="section-6.3.1-1">Serialized as:
+1. Length (4 bytes): Number of bytes including null terminator
+2. Bytes (variable): UTF-8 encoded string with null terminator<a href="#section-6.3.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="space-padded-string-type-s">
+<section id="section-6.3.2">
+          <h4 id="name-space-padded-string-type-s">
+<a href="#section-6.3.2" class="section-number selfRef">6.3.2. </a><a href="#name-space-padded-string-type-s" class="section-name selfRef">Space-padded String (type 's')</a>
+          </h4>
+<p id="section-6.3.2-1">Used for fixed-length PKCS#11 string fields (e.g., CK_TOKEN_INFO labels). Serialized as:
+1. Length (4 bytes): Total length of the string field
+2. Bytes (variable): UTF-8 encoded string, space-padded to length<a href="#section-6.3.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="array-types">
+<section id="section-6.4">
+        <h3 id="name-array-types">
+<a href="#section-6.4" class="section-number selfRef">6.4. </a><a href="#name-array-types" class="section-name selfRef">Array Types</a>
+        </h3>
+<div id="byte-array-type-ay">
+<section id="section-6.4.1">
+          <h4 id="name-byte-array-type-ay">
+<a href="#section-6.4.1" class="section-number selfRef">6.4.1. </a><a href="#name-byte-array-type-ay" class="section-name selfRef">Byte Array (type 'ay')</a>
+          </h4>
+<p id="section-6.4.1-1">Serialized as:
+1. Length (4 bytes): Number of bytes
+2. Bytes (variable): Array contents<a href="#section-6.4.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="ulong-array-type-au">
+<section id="section-6.4.2">
+          <h4 id="name-ulong-array-type-au">
+<a href="#section-6.4.2" class="section-number selfRef">6.4.2. </a><a href="#name-ulong-array-type-au" class="section-name selfRef">ULONG Array (type 'au')</a>
+          </h4>
+<p id="section-6.4.2-1">Serialized as:
+1. Count (4 bytes): Number of elements
+2. Elements (variable): Each element as a 4-byte unsigned integer<a href="#section-6.4.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="complex-types">
+<section id="section-6.5">
+        <h3 id="name-complex-types">
+<a href="#section-6.5" class="section-number selfRef">6.5. </a><a href="#name-complex-types" class="section-name selfRef">Complex Types</a>
+        </h3>
+<div id="ckmechanism-type-m">
+<section id="section-6.5.1">
+          <h4 id="name-ck_mechanism-type-m">
+<a href="#section-6.5.1" class="section-number selfRef">6.5.1. </a><a href="#name-ck_mechanism-type-m" class="section-name selfRef">CK_MECHANISM (type 'M')</a>
+          </h4>
+<p id="section-6.5.1-1">Serialized as:
+1. Mechanism type (4 bytes): CK_MECHANISM_TYPE value
+2. Parameter type (1 byte): Type code for the parameter
+3. Parameter length (4 bytes): Length of parameter data
+4. Parameter data (variable): Mechanism-specific parameter<a href="#section-6.5.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.5.1-2">The parameter type and format depend on the mechanism. Common mechanisms have specific serialization rules:<a href="#section-6.5.1-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.5.1-3.1">
+              <p id="section-6.5.1-3.1.1">CKM_RSA_PKCS_PSS: Serialized as CK_RSA_PKCS_PSS_PARAMS<a href="#section-6.5.1-3.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.5.1-3.2">
+              <p id="section-6.5.1-3.2.1">CKM_RSA_PKCS_OAEP: Serialized as CK_RSA_PKCS_OAEP_PARAMS<a href="#section-6.5.1-3.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.5.1-3.3">
+              <p id="section-6.5.1-3.3.1">CKM_AES_GCM: Serialized as CK_GCM_PARAMS<a href="#section-6.5.1-3.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.5.1-3.4">
+              <p id="section-6.5.1-3.4.1">CKM_ECDH1_DERIVE: Serialized as CK_ECDH1_DERIVE_PARAMS<a href="#section-6.5.1-3.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</section>
+</div>
+<div id="ckattribute-type-a">
+<section id="section-6.5.2">
+          <h4 id="name-ck_attribute-type-a">
+<a href="#section-6.5.2" class="section-number selfRef">6.5.2. </a><a href="#name-ck_attribute-type-a" class="section-name selfRef">CK_ATTRIBUTE (type 'A')</a>
+          </h4>
+<p id="section-6.5.2-1">Attributes require special handling due to their recursive nature (attributes can contain attribute arrays).<a href="#section-6.5.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.5.2-2">Serialized as:
+1. Attribute type (4 bytes): CK_ATTRIBUTE_TYPE value
+2. Value length (4 bytes): Length of pValue
+3. Value data (variable): Depends on attribute type<a href="#section-6.5.2-2" class="pilcrow">¶</a></p>
+<p id="section-6.5.2-3">For attribute array values (e.g., CKA_WRAP_TEMPLATE), the value data is recursively serialized as an attribute array.<a href="#section-6.5.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="attribute-buffer-type-fa">
+<section id="section-6.5.3">
+          <h4 id="name-attribute-buffer-type-fa">
+<a href="#section-6.5.3" class="section-number selfRef">6.5.3. </a><a href="#name-attribute-buffer-type-fa" class="section-name selfRef">Attribute Buffer (type 'fA')</a>
+          </h4>
+<p id="section-6.5.3-1">Used for output attribute arrays where the application provides templates. Follows the PKCS#11 convention for retrieving variable-length values:<a href="#section-6.5.3-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.5.3-2">
+<li id="section-6.5.3-2.1">
+              <p id="section-6.5.3-2.1.1">Client sends attribute template with pValue pointers<a href="#section-6.5.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-6.5.3-2.2">
+              <p id="section-6.5.3-2.2.1">Server responds with:<a href="#section-6.5.3-2.2.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.5.3-2.2.2.1">
+                  <p id="section-6.5.3-2.2.2.1.1">Actual ulValueLen for each attribute<a href="#section-6.5.3-2.2.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.3-2.2.2.2">
+                  <p id="section-6.5.3-2.2.2.2.1">For non-sensitive attributes: actual pValue data<a href="#section-6.5.3-2.2.2.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.3-2.2.2.3">
+                  <p id="section-6.5.3-2.2.2.3.1">For sensitive attributes: CK_UNAVAILABLE_INFORMATION<a href="#section-6.5.3-2.2.2.3.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+</li>
+          </ol>
+</section>
+</div>
+</section>
+</div>
+<div id="variable-length-output-convention">
+<section id="section-6.6">
+        <h3 id="name-variable-length-output-conv">
+<a href="#section-6.6" class="section-number selfRef">6.6. </a><a href="#name-variable-length-output-conv" class="section-name selfRef">Variable-Length Output Convention</a>
+        </h3>
+<p id="section-6.6-1">The protocol implements the PKCS#11 convention for variable-length output parameters:<a href="#section-6.6-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.6-2">
+<li id="section-6.6-2.1">
+            <p id="section-6.6-2.1.1">Client sends <code>f_</code> (buffer) with length 0 or requested size<a href="#section-6.6-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.6-2.2">
+            <p id="section-6.6-2.2.1">Server responds with:<a href="#section-6.6-2.2.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.6-2.2.2.1">
+                <p id="section-6.6-2.2.2.1.1">If buffer too small or NULL: required size<a href="#section-6.6-2.2.2.1.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-6.6-2.2.2.2">
+                <p id="section-6.6-2.2.2.2.1">Otherwise: actual data and size<a href="#section-6.6-2.2.2.2.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+</li>
+        </ol>
+<p id="section-6.6-3">This applies to functions like C_GetAttributeValue, C_Encrypt, C_GetMechanismList, etc.<a href="#section-6.6-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="function-call-mappings">
+<section id="section-7">
+      <h2 id="name-function-call-mappings">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-function-call-mappings" class="section-name selfRef">Function Call Mappings</a>
+      </h2>
+<p id="section-7-1">Each PKCS#11 function is mapped to an RPC call with a unique call identifier and type signature.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<div id="call-identifiers">
+<section id="section-7.1">
+        <h3 id="name-call-identifiers">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-call-identifiers" class="section-name selfRef">Call Identifiers</a>
+        </h3>
+<p id="section-7.1-1">Call identifiers are defined in the range:<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-7.1-2.1">
+            <p id="section-7.1-2.1.1">0: P11_RPC_CALL_ERROR (error response)<a href="#section-7.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-7.1-2.2">
+            <p id="section-7.1-2.2.1">1-57: PKCS#11 2.x functions<a href="#section-7.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-7.1-2.3">
+            <p id="section-7.1-2.3.1">58-79: PKCS#11 3.0 functions (version 1+)<a href="#section-7.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-7.1-2.4">
+            <p id="section-7.1-2.4.1">80-81: Extended functions with mechanism parameter updates (version 2+)<a href="#section-7.1-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="example-function-mappings">
+<section id="section-7.2">
+        <h3 id="name-example-function-mappings">
+<a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-example-function-mappings" class="section-name selfRef">Example Function Mappings</a>
+        </h3>
+<div id="cgetmechanismlist">
+<section id="section-7.2.1">
+          <h4 id="name-c_getmechanismlist">
+<a href="#section-7.2.1" class="section-number selfRef">7.2.1. </a><a href="#name-c_getmechanismlist" class="section-name selfRef">C_GetMechanismList</a>
+          </h4>
+<p id="section-7.2.1-1">Request signature: <code>"ufu"</code> (slot_id, buffer_for_mechanisms, count)
+Response signature: <code>"au"</code> (array_of_mechanisms)<a href="#section-7.2.1-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-7.2.1-2">
+<pre>
+Request:
+  - CK_SLOT_ID slot_id (u)
+  - Buffer indicator for mechanisms (f)
+  - CK_ULONG count (u) - capacity of buffer
+
+Response:
+  - CK_MECHANISM_TYPE array (au)
+</pre><a href="#section-7.2.1-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="cgetattributevalue">
+<section id="section-7.2.2">
+          <h4 id="name-c_getattributevalue">
+<a href="#section-7.2.2" class="section-number selfRef">7.2.2. </a><a href="#name-c_getattributevalue" class="section-name selfRef">C_GetAttributeValue</a>
+          </h4>
+<p id="section-7.2.2-1">Request signature: <code>"uufA"</code> (session, object, buffer_for_attributes)
+Response signature: <code>"aAu"</code> (attributes_array, result_code)<a href="#section-7.2.2-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-7.2.2-2">
+<pre>
+Request:
+  - CK_SESSION_HANDLE session (u)
+  - CK_OBJECT_HANDLE object (u)
+  - Attribute template (fA)
+
+Response:
+  - Filled attribute array (aA)
+  - CK_RV result code (u)
+</pre><a href="#section-7.2.2-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="cencrypt">
+<section id="section-7.2.3">
+          <h4 id="name-c_encrypt">
+<a href="#section-7.2.3" class="section-number selfRef">7.2.3. </a><a href="#name-c_encrypt" class="section-name selfRef">C_Encrypt</a>
+          </h4>
+<p id="section-7.2.3-1">Request signature: <code>"uayfy"</code> (session, plaintext_data, buffer_for_ciphertext)
+Response signature: <code>"ay"</code> (ciphertext_data)<a href="#section-7.2.3-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-7.2.3-2">
+<pre>
+Request:
+  - CK_SESSION_HANDLE session (u)
+  - Plaintext data (ay)
+  - Buffer for ciphertext (fy)
+
+Response:
+  - Ciphertext data (ay)
+</pre><a href="#section-7.2.3-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="pkcs11-30-functions-version-1">
+<section id="section-7.3">
+        <h3 id="name-pkcs11-30-functions-version">
+<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-pkcs11-30-functions-version" class="section-name selfRef">PKCS#11 3.0 Functions (Version 1+)</a>
+        </h3>
+<p id="section-7.3-1">Version 1 of the protocol adds support for PKCS#11 3.0 functions:<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-7.3-2.1">
+            <p id="section-7.3-2.1.1">C_LoginUser (call ID 58): Enhanced login with username<a href="#section-7.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-7.3-2.2">
+            <p id="section-7.3-2.2.1">C_SessionCancel (call ID 59): Cancel ongoing session operations<a href="#section-7.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-7.3-2.3">
+            <p id="section-7.3-2.3.1">Message-based encryption functions (call IDs 60-67):<a href="#section-7.3-2.3.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-7.3-2.3.2.1">
+                <p id="section-7.3-2.3.2.1.1">C_MessageEncryptInit, C_EncryptMessage, C_EncryptMessageBegin, C_EncryptMessageNext, C_MessageEncryptFinal<a href="#section-7.3-2.3.2.1.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-7.3-2.3.2.2">
+                <p id="section-7.3-2.3.2.2.1">C_MessageDecryptInit, C_DecryptMessage, C_DecryptMessageBegin, C_DecryptMessageNext, C_MessageDecryptFinal<a href="#section-7.3-2.3.2.2.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+</li>
+          <li class="normal" id="section-7.3-2.4">
+            <p id="section-7.3-2.4.1">Message-based signature functions (call IDs 68-75):<a href="#section-7.3-2.4.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-7.3-2.4.2.1">
+                <p id="section-7.3-2.4.2.1.1">C_MessageSignInit, C_SignMessage, C_SignMessageBegin, C_SignMessageNext, C_MessageSignFinal<a href="#section-7.3-2.4.2.1.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-7.3-2.4.2.2">
+                <p id="section-7.3-2.4.2.2.1">C_MessageVerifyInit, C_VerifyMessage, C_VerifyMessageBegin, C_VerifyMessageNext, C_MessageVerifyFinal<a href="#section-7.3-2.4.2.2.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+</li>
+        </ul>
+</section>
+</div>
+<div id="extended-functions-version-2">
+<section id="section-7.4">
+        <h3 id="name-extended-functions-version-">
+<a href="#section-7.4" class="section-number selfRef">7.4. </a><a href="#name-extended-functions-version-" class="section-name selfRef">Extended Functions (Version 2+)</a>
+        </h3>
+<p id="section-7.4-1">Version 2 adds functions that return updated mechanism parameters:<a href="#section-7.4-1" class="pilcrow">¶</a></p>
+<div id="cinittoken2-call-id-80">
+<section id="section-7.4.1">
+          <h4 id="name-c_inittoken2-call-id-80">
+<a href="#section-7.4.1" class="section-number selfRef">7.4.1. </a><a href="#name-c_inittoken2-call-id-80" class="section-name selfRef">C_InitToken2 (call ID 80)</a>
+          </h4>
+<p id="section-7.4.1-1">Request signature: <code>"uays"</code> (slot_id, pin, label)
+Response signature: <code>""</code><a href="#section-7.4.1-1" class="pilcrow">¶</a></p>
+<p id="section-7.4.1-2">Enhanced version of C_InitToken using space-padded string for label instead of null-terminated.<a href="#section-7.4.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="cderivekey2-call-id-81">
+<section id="section-7.4.2">
+          <h4 id="name-c_derivekey2-call-id-81">
+<a href="#section-7.4.2" class="section-number selfRef">7.4.2. </a><a href="#name-c_derivekey2-call-id-81" class="section-name selfRef">C_DeriveKey2 (call ID 81)</a>
+          </h4>
+<p id="section-7.4.2-1">Request signature: <code>"uMuaA"</code> (session, mechanism, base_key, template)
+Response signature: <code>"uPu"</code> (derived_key_handle, updated_mechanism_params, result_code)<a href="#section-7.4.2-1" class="pilcrow">¶</a></p>
+<p id="section-7.4.2-2">Enhanced version of C_DeriveKey that returns updated mechanism parameters. This is particularly useful for mechanisms like Kyber KEM where the encapsulation produces a ciphertext that must be returned to the caller.<a href="#section-7.4.2-2" class="pilcrow">¶</a></p>
+<p id="section-7.4.2-3">The <code>P</code> type (mechanism parameter update) serializes the updated pParameter field of the CK_MECHANISM structure according to the mechanism type.<a href="#section-7.4.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="protocol-version-differences">
+<section id="section-8">
+      <h2 id="name-protocol-version-difference">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-protocol-version-difference" class="section-name selfRef">Protocol Version Differences</a>
+      </h2>
+<p id="section-8-1">This section summarizes the functional differences between protocol versions.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<div id="version-0">
+<section id="section-8.1">
+        <h3 id="name-version-0">
+<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-version-0" class="section-name selfRef">Version 0</a>
+        </h3>
+<p id="section-8.1-1">Initial protocol version supporting PKCS#11 2.40 functions:<a href="#section-8.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-8.1-2.1">
+            <p id="section-8.1-2.1.1">All functions from C_Initialize through C_WaitForSlotEvent<a href="#section-8.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.1-2.2">
+            <p id="section-8.1-2.2.1">Call IDs 1-57<a href="#section-8.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.1-2.3">
+            <p id="section-8.1-2.3.1">No version negotiation (always uses version byte 0x00)<a href="#section-8.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="version-1">
+<section id="section-8.2">
+        <h3 id="name-version-1">
+<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-version-1" class="section-name selfRef">Version 1</a>
+        </h3>
+<p id="section-8.2-1">Adds PKCS#11 3.0 function support:<a href="#section-8.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-8.2-2.1">
+            <p id="section-8.2-2.1.1">Version negotiation support<a href="#section-8.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.2-2.2">
+            <p id="section-8.2-2.2.1">C_LoginUser and C_SessionCancel<a href="#section-8.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.2-2.3">
+            <p id="section-8.2-2.3.1">Message-based encryption functions<a href="#section-8.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.2-2.4">
+            <p id="section-8.2-2.4.1">Message-based signature functions<a href="#section-8.2-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.2-2.5">
+            <p id="section-8.2-2.5.1">Call IDs 58-79<a href="#section-8.2-2.5.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-8.2-3">Backward compatibility: Version 1 servers can communicate with version 0 clients by using only version 0 function calls.<a href="#section-8.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="version-2">
+<section id="section-8.3">
+        <h3 id="name-version-2">
+<a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-version-2" class="section-name selfRef">Version 2</a>
+        </h3>
+<p id="section-8.3-1">Adds functions with mechanism parameter updates:<a href="#section-8.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-8.3-2.1">
+            <p id="section-8.3-2.1.1">C_InitToken2: Uses space-padded label string<a href="#section-8.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.3-2.2">
+            <p id="section-8.3-2.2.1">C_DeriveKey2: Returns updated mechanism parameters<a href="#section-8.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.3-2.3">
+            <p id="section-8.3-2.3.1">Call IDs 80-81<a href="#section-8.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-8.3-3">Backward compatibility:
+- Version 2 servers can downgrade to version 1 or 0
+- For version 0-1 clients, C_InitToken and C_DeriveKey are used
+- Mechanism parameter updates are not available at lower versions<a href="#section-8.3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="error-handling">
+<section id="section-9">
+      <h2 id="name-error-handling">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-error-handling" class="section-name selfRef">Error Handling</a>
+      </h2>
+<div id="pkcs11-return-codes">
+<section id="section-9.1">
+        <h3 id="name-pkcs11-return-codes">
+<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-pkcs11-return-codes" class="section-name selfRef">PKCS#11 Return Codes</a>
+        </h3>
+<p id="section-9.1-1">All PKCS#11 return codes (CK_RV) are transmitted as unsigned 32-bit integers in response messages. The protocol does not define additional error codes beyond those in PKCS#11.<a href="#section-9.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="protocol-errors">
+<section id="section-9.2">
+        <h3 id="name-protocol-errors">
+<a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-protocol-errors" class="section-name selfRef">Protocol Errors</a>
+        </h3>
+<p id="section-9.2-1">Protocol-level errors are handled as follows:<a href="#section-9.2-1" class="pilcrow">¶</a></p>
+<div id="parse-errors">
+<section id="section-9.2.1">
+          <h4 id="name-parse-errors">
+<a href="#section-9.2.1" class="section-number selfRef">9.2.1. </a><a href="#name-parse-errors" class="section-name selfRef">Parse Errors</a>
+          </h4>
+<p id="section-9.2.1-1">If the server cannot parse a request message:
+1. Server sends P11_RPC_CALL_ERROR response
+2. Response contains only CKR_GENERAL_ERROR return code
+3. Connection may be closed<a href="#section-9.2.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="version-negotiation-failure">
+<section id="section-9.2.2">
+          <h4 id="name-version-negotiation-failure">
+<a href="#section-9.2.2" class="section-number selfRef">9.2.2. </a><a href="#name-version-negotiation-failure" class="section-name selfRef">Version Negotiation Failure</a>
+          </h4>
+<p id="section-9.2.2-1">If version negotiation fails:
+1. Client detects authentication error
+2. Client disconnects
+3. Client attempts reconnection with version 0
+4. If reconnection fails, client returns CKR_DEVICE_ERROR<a href="#section-9.2.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="transport-errors">
+<section id="section-9.2.3">
+          <h4 id="name-transport-errors">
+<a href="#section-9.2.3" class="section-number selfRef">9.2.3. </a><a href="#name-transport-errors" class="section-name selfRef">Transport Errors</a>
+          </h4>
+<p id="section-9.2.3-1">If the transport layer fails:
+1. Pending operations return CKR_DEVICE_ERROR
+2. Connection is closed
+3. Subsequent operations return CKR_DEVICE_REMOVED<a href="#section-9.2.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-10">
+      <h2 id="name-security-considerations">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<div id="authentication">
+<section id="section-10.1">
+        <h3 id="name-authentication">
+<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-authentication" class="section-name selfRef">Authentication</a>
+        </h3>
+<p id="section-10.1-1">The protocol itself does not provide authentication mechanisms. Authentication is delegated to the transport layer:<a href="#section-10.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-10.1-2.1">
+            <p id="section-10.1-2.1.1">For SSH-based transports: SSH authentication<a href="#section-10.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.1-2.2">
+            <p id="section-10.1-2.2.1">For Unix domain sockets: File system permissions and optional SO_PEERCRED<a href="#section-10.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.1-2.3">
+            <p id="section-10.1-2.3.1">For VSOCK: VM isolation boundaries<a href="#section-10.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="confidentiality-and-integrity">
+<section id="section-10.2">
+        <h3 id="name-confidentiality-and-integri">
+<a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-confidentiality-and-integri" class="section-name selfRef">Confidentiality and Integrity</a>
+        </h3>
+<p id="section-10.2-1">The protocol does not provide encryption or integrity protection. These properties must be provided by:<a href="#section-10.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-10.2-2.1">
+            <p id="section-10.2-2.1.1">Transport layer encryption (e.g., SSH)<a href="#section-10.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.2-2.2">
+            <p id="section-10.2-2.2.1">Operating system isolation (e.g., Unix domain sockets with file system permissions)<a href="#section-10.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.2-2.3">
+            <p id="section-10.2-2.3.1">Hypervisor isolation (e.g., VSOCK between VMs)<a href="#section-10.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-10.2-3">For scenarios requiring confidentiality and integrity without transport-level security, implementers should use TLS or similar protocols.<a href="#section-10.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sandboxing">
+<section id="section-10.3">
+        <h3 id="name-sandboxing">
+<a href="#section-10.3" class="section-number selfRef">10.3. </a><a href="#name-sandboxing" class="section-name selfRef">Sandboxing</a>
+        </h3>
+<p id="section-10.3-1">A key use case for the protocol is to sandbox untrusted PKCS#11 modules. When sandboxing:<a href="#section-10.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-10.3-2.1">
+            <p id="section-10.3-2.1.1">The server process should run with minimal privileges<a href="#section-10.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.3-2.2">
+            <p id="section-10.3-2.2.1">File system access should be restricted using tools like bubblewrap<a href="#section-10.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.3-2.3">
+            <p id="section-10.3-2.3.1">Seccomp filters should limit available system calls<a href="#section-10.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.3-2.4">
+            <p id="section-10.3-2.4.1">Resource limits should prevent denial of service<a href="#section-10.3-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="sensitive-data">
+<section id="section-10.4">
+        <h3 id="name-sensitive-data">
+<a href="#section-10.4" class="section-number selfRef">10.4. </a><a href="#name-sensitive-data" class="section-name selfRef">Sensitive Data</a>
+        </h3>
+<p id="section-10.4-1">The protocol transmits sensitive cryptographic material (keys, PINs, plaintext) in serialized form. Implementations must:<a href="#section-10.4-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-10.4-2.1">
+            <p id="section-10.4-2.1.1">Ensure transport channels are appropriately secured<a href="#section-10.4-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.4-2.2">
+            <p id="section-10.4-2.2.1">Zero sensitive memory after use<a href="#section-10.4-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.4-2.3">
+            <p id="section-10.4-2.3.1">Avoid logging sensitive parameters<a href="#section-10.4-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.4-2.4">
+            <p id="section-10.4-2.4.1">Respect PKCS#11 CKA_SENSITIVE and CKA_EXTRACTABLE attributes<a href="#section-10.4-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="input-validation">
+<section id="section-10.5">
+        <h3 id="name-input-validation">
+<a href="#section-10.5" class="section-number selfRef">10.5. </a><a href="#name-input-validation" class="section-name selfRef">Input Validation</a>
+        </h3>
+<p id="section-10.5-1">Servers must validate all input parameters:<a href="#section-10.5-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-10.5-2.1">
+            <p id="section-10.5-2.1.1">Array lengths must be checked against buffer sizes<a href="#section-10.5-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.5-2.2">
+            <p id="section-10.5-2.2.1">Attribute types must be validated<a href="#section-10.5-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.5-2.3">
+            <p id="section-10.5-2.3.1">Mechanism parameters must be validated according to PKCS#11 specifications<a href="#section-10.5-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.5-2.4">
+            <p id="section-10.5-2.4.1">Call IDs must be within valid ranges<a href="#section-10.5-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-10.5-3">Failure to validate inputs may lead to buffer overflows, denial of service, or information disclosure.<a href="#section-10.5-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="iana-considerations">
+<section id="section-11">
+      <h2 id="name-iana-considerations">
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-11-1">This document has no IANA actions.<a href="#section-11-1" class="pilcrow">¶</a></p>
+<p id="section-11-2">The protocol uses private handshake identifiers and does not require registry allocations. Future extensions may define additional type codes or call identifiers, which should be coordinated through the p11-kit project.<a href="#section-11-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="implementation-considerations">
+<section id="section-12">
+      <h2 id="name-implementation-consideratio">
+<a href="#section-12" class="section-number selfRef">12. </a><a href="#name-implementation-consideratio" class="section-name selfRef">Implementation Considerations</a>
+      </h2>
+<div id="endianness-and-data-models">
+<section id="section-12.1">
+        <h3 id="name-endianness-and-data-models">
+<a href="#section-12.1" class="section-number selfRef">12.1. </a><a href="#name-endianness-and-data-models" class="section-name selfRef">Endianness and Data Models</a>
+        </h3>
+<p id="section-12.1-1">The protocol uses network byte order (big-endian) for all multi-byte integers. The 32-bit encoding of CK_ULONG ensures interoperability across different platforms:<a href="#section-12.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-12.1-2.1">
+            <p id="section-12.1-2.1.1">LP64 systems (Unix/Linux 64-bit): CK_ULONG is 64-bit natively<a href="#section-12.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-12.1-2.2">
+            <p id="section-12.1-2.2.1">LLP64 systems (Windows 64-bit): CK_ULONG is 32-bit natively<a href="#section-12.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-12.1-2.3">
+            <p id="section-12.1-2.3.1">ILP32 systems (32-bit): CK_ULONG is 32-bit natively<a href="#section-12.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-12.1-3">Implementations must handle this conversion carefully, particularly when CK_ULONG values exceed 32-bit range on LP64 systems.<a href="#section-12.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="buffer-management">
+<section id="section-12.2">
+        <h3 id="name-buffer-management">
+<a href="#section-12.2" class="section-number selfRef">12.2. </a><a href="#name-buffer-management" class="section-name selfRef">Buffer Management</a>
+        </h3>
+<p id="section-12.2-1">The protocol's variable-length output convention requires two round trips for unknown-size outputs:<a href="#section-12.2-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-12.2-2">
+<li id="section-12.2-2.1">
+            <p id="section-12.2-2.1.1">First call with NULL pointer to determine size<a href="#section-12.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-12.2-2.2">
+            <p id="section-12.2-2.2.1">Second call with appropriately sized buffer<a href="#section-12.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-12.2-3">Implementations should optimize common cases where sizes are known or bounded.<a href="#section-12.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="mechanism-parameter-handling">
+<section id="section-12.3">
+        <h3 id="name-mechanism-parameter-handlin">
+<a href="#section-12.3" class="section-number selfRef">12.3. </a><a href="#name-mechanism-parameter-handlin" class="section-name selfRef">Mechanism Parameter Handling</a>
+        </h3>
+<p id="section-12.3-1">Different PKCS#11 mechanisms use different parameter structures. Implementations must:<a href="#section-12.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-12.3-2.1">
+            <p id="section-12.3-2.1.1">Maintain tables mapping mechanism types to parameter structures<a href="#section-12.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-12.3-2.2">
+            <p id="section-12.3-2.2.1">Validate parameter structures according to PKCS#11 specifications<a href="#section-12.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-12.3-2.3">
+            <p id="section-12.3-2.3.1">Handle vendor-specific mechanisms gracefully<a href="#section-12.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="threading-and-concurrency">
+<section id="section-12.4">
+        <h3 id="name-threading-and-concurrency">
+<a href="#section-12.4" class="section-number selfRef">12.4. </a><a href="#name-threading-and-concurrency" class="section-name selfRef">Threading and Concurrency</a>
+        </h3>
+<p id="section-12.4-1">The protocol supports concurrent calls through the call code mechanism. Multiple threads can:<a href="#section-12.4-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-12.4-2.1">
+            <p id="section-12.4-2.1.1">Send requests with different call codes<a href="#section-12.4-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-12.4-2.2">
+            <p id="section-12.4-2.2.1">Receive responses in any order<a href="#section-12.4-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-12.4-2.3">
+            <p id="section-12.4-2.3.1">Match responses to requests via call code<a href="#section-12.4-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-12.4-3">Implementations must ensure thread-safe access to the transport layer and proper request-response matching.<a href="#section-12.4-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="performance-optimization">
+<section id="section-12.5">
+        <h3 id="name-performance-optimization">
+<a href="#section-12.5" class="section-number selfRef">12.5. </a><a href="#name-performance-optimization" class="section-name selfRef">Performance Optimization</a>
+        </h3>
+<p id="section-12.5-1">For high-performance scenarios:<a href="#section-12.5-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-12.5-2.1">
+            <p id="section-12.5-2.1.1">Connection pooling can reduce setup overhead<a href="#section-12.5-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-12.5-2.2">
+            <p id="section-12.5-2.2.1">Batch operations should be used when available<a href="#section-12.5-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-12.5-2.3">
+            <p id="section-12.5-2.3.1">Local caching of token information can reduce round trips<a href="#section-12.5-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-12.5-2.4">
+            <p id="section-12.5-2.4.1">Unix domain sockets typically offer better performance than exec-based transports<a href="#section-12.5-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="sec-combined-references">
+<section id="section-13">
+      <h2 id="name-references">
+<a href="#section-13" class="section-number selfRef">13. </a><a href="#name-references" class="section-name selfRef">References</a>
+      </h2>
+<div id="sec-normative-references">
+<section id="section-13.1">
+        <h3 id="name-normative-references">
+<a href="#section-13.1" class="section-number selfRef">13.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+        </h3>
+<dl class="references">
+<dt id="PKCS11-v2.40">[PKCS11-v2.40]</dt>
+        <dd>
+<span class="refAuthor">OASIS</span>, <span class="refTitle">"PKCS #11 Cryptographic Token Interface Base Specification Version 2.40"</span>, <time datetime="2015-04" class="refDate">April 2015</time>, <span>&lt;<a href="http://docs.oasis-open.org/pkcs11/pkcs11-base/v2.40/pkcs11-base-v2.40.html">http://docs.oasis-open.org/pkcs11/pkcs11-base/v2.40/pkcs11-base-v2.40.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="PKCS11-v3.1">[PKCS11-v3.1]</dt>
+        <dd>
+<span class="refAuthor">OASIS</span>, <span class="refTitle">"PKCS #11 Cryptographic Token Interface Specification Version 3.1"</span>, <time datetime="2021-06" class="refDate">June 2021</time>, <span>&lt;<a href="https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.1/pkcs11-spec-v3.1.pdf">https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.1/pkcs11-spec-v3.1.pdf</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC2119">[RFC2119]</dt>
+        <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+      <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="sec-informative-references">
+<section id="section-13.2">
+        <h3 id="name-informative-references">
+<a href="#section-13.2" class="section-number selfRef">13.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+        </h3>
+<dl class="references">
+<dt id="DBUS">[DBUS]</dt>
+        <dd>
+<span class="refAuthor">freedesktop.org</span>, <span class="refTitle">"D-Bus Specification"</span>, <span>n.d.</span>, <span>&lt;<a href="https://dbus.freedesktop.org/doc/dbus-specification.html">https://dbus.freedesktop.org/doc/dbus-specification.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="KMIP">[KMIP]</dt>
+        <dd>
+<span class="refAuthor">OASIS</span>, <span class="refTitle">"Key Management Interoperability Protocol Specification Version 2.1"</span>, <time datetime="2020-01" class="refDate">January 2020</time>, <span>&lt;<a href="https://docs.oasis-open.org/kmip/kmip-spec/v2.1/kmip-spec-v2.1.html">https://docs.oasis-open.org/kmip/kmip-spec/v2.1/kmip-spec-v2.1.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="P11-GLUE">[P11-GLUE]</dt>
+      <dd>
+<span class="refAuthor">p11-glue Project</span>, <span class="refTitle">"p11-glue: Standardizing PKCS#11"</span>, <span>n.d.</span>, <span>&lt;<a href="https://p11-glue.github.io/p11-glue/">https://p11-glue.github.io/p11-glue/</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+<div id="acknowledgments">
+<section id="appendix-A">
+      <h2 id="name-acknowledgments">
+<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+      </h2>
+<p id="appendix-A-1">The author would like to thank Stef Walter for creating the p11-kit project and designing the initial RPC protocol. Thanks also to the p11-glue community for their work on standardizing PKCS#11 practices.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="complete-function-signature-table">
+<section id="appendix-B">
+      <h2 id="name-complete-function-signature">
+<a href="#name-complete-function-signature" class="section-name selfRef">Complete Function Signature Table</a>
+      </h2>
+<p id="appendix-B-1">This appendix provides a complete reference of all PKCS#11 function signatures in the protocol.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-2">
+        <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
+<thead>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">Call ID</th>
+            <th class="text-left" rowspan="1" colspan="1">Function Name</th>
+            <th class="text-left" rowspan="1" colspan="1">Request Signature</th>
+            <th class="text-left" rowspan="1" colspan="1">Response Signature</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">0</td>
+            <td class="text-left" rowspan="1" colspan="1">ERROR</td>
+            <td class="text-left" rowspan="1" colspan="1">N/A</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">1</td>
+            <td class="text-left" rowspan="1" colspan="1">C_Initialize</td>
+            <td class="text-left" rowspan="1" colspan="1">ayyay</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">2</td>
+            <td class="text-left" rowspan="1" colspan="1">C_Finalize</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">3</td>
+            <td class="text-left" rowspan="1" colspan="1">C_GetInfo</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+            <td class="text-left" rowspan="1" colspan="1">vsusv</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">4</td>
+            <td class="text-left" rowspan="1" colspan="1">C_GetSlotList</td>
+            <td class="text-left" rowspan="1" colspan="1">yfu</td>
+            <td class="text-left" rowspan="1" colspan="1">au</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">5</td>
+            <td class="text-left" rowspan="1" colspan="1">C_GetSlotInfo</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+            <td class="text-left" rowspan="1" colspan="1">ssuvv</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">6</td>
+            <td class="text-left" rowspan="1" colspan="1">C_GetTokenInfo</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+            <td class="text-left" rowspan="1" colspan="1">ssssuuuuuuuuuuuvvs</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">7</td>
+            <td class="text-left" rowspan="1" colspan="1">C_GetMechanismList</td>
+            <td class="text-left" rowspan="1" colspan="1">ufu</td>
+            <td class="text-left" rowspan="1" colspan="1">au</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">8</td>
+            <td class="text-left" rowspan="1" colspan="1">C_GetMechanismInfo</td>
+            <td class="text-left" rowspan="1" colspan="1">uu</td>
+            <td class="text-left" rowspan="1" colspan="1">uuu</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">9</td>
+            <td class="text-left" rowspan="1" colspan="1">C_InitToken</td>
+            <td class="text-left" rowspan="1" colspan="1">uayz</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">10</td>
+            <td class="text-left" rowspan="1" colspan="1">C_OpenSession</td>
+            <td class="text-left" rowspan="1" colspan="1">uu</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">11</td>
+            <td class="text-left" rowspan="1" colspan="1">C_CloseSession</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">12</td>
+            <td class="text-left" rowspan="1" colspan="1">C_CloseAllSessions</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">13</td>
+            <td class="text-left" rowspan="1" colspan="1">C_GetSessionInfo</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+            <td class="text-left" rowspan="1" colspan="1">uuuu</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">14</td>
+            <td class="text-left" rowspan="1" colspan="1">C_InitPIN</td>
+            <td class="text-left" rowspan="1" colspan="1">uay</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">15</td>
+            <td class="text-left" rowspan="1" colspan="1">C_SetPIN</td>
+            <td class="text-left" rowspan="1" colspan="1">uayay</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">16</td>
+            <td class="text-left" rowspan="1" colspan="1">C_GetOperationState</td>
+            <td class="text-left" rowspan="1" colspan="1">ufy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">17</td>
+            <td class="text-left" rowspan="1" colspan="1">C_SetOperationState</td>
+            <td class="text-left" rowspan="1" colspan="1">uayuu</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">18</td>
+            <td class="text-left" rowspan="1" colspan="1">C_Login</td>
+            <td class="text-left" rowspan="1" colspan="1">uuay</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">19</td>
+            <td class="text-left" rowspan="1" colspan="1">C_Logout</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">20</td>
+            <td class="text-left" rowspan="1" colspan="1">C_CreateObject</td>
+            <td class="text-left" rowspan="1" colspan="1">uaA</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">21</td>
+            <td class="text-left" rowspan="1" colspan="1">C_CopyObject</td>
+            <td class="text-left" rowspan="1" colspan="1">uuaA</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">22</td>
+            <td class="text-left" rowspan="1" colspan="1">C_DestroyObject</td>
+            <td class="text-left" rowspan="1" colspan="1">uu</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">23</td>
+            <td class="text-left" rowspan="1" colspan="1">C_GetObjectSize</td>
+            <td class="text-left" rowspan="1" colspan="1">uu</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">24</td>
+            <td class="text-left" rowspan="1" colspan="1">C_GetAttributeValue</td>
+            <td class="text-left" rowspan="1" colspan="1">uufA</td>
+            <td class="text-left" rowspan="1" colspan="1">aAu</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">25</td>
+            <td class="text-left" rowspan="1" colspan="1">C_SetAttributeValue</td>
+            <td class="text-left" rowspan="1" colspan="1">uuaA</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">26</td>
+            <td class="text-left" rowspan="1" colspan="1">C_FindObjectsInit</td>
+            <td class="text-left" rowspan="1" colspan="1">uaA</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">27</td>
+            <td class="text-left" rowspan="1" colspan="1">C_FindObjects</td>
+            <td class="text-left" rowspan="1" colspan="1">ufu</td>
+            <td class="text-left" rowspan="1" colspan="1">au</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">28</td>
+            <td class="text-left" rowspan="1" colspan="1">C_FindObjectsFinal</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">29</td>
+            <td class="text-left" rowspan="1" colspan="1">C_EncryptInit</td>
+            <td class="text-left" rowspan="1" colspan="1">uMu</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">30</td>
+            <td class="text-left" rowspan="1" colspan="1">C_Encrypt</td>
+            <td class="text-left" rowspan="1" colspan="1">uayfy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">31</td>
+            <td class="text-left" rowspan="1" colspan="1">C_EncryptUpdate</td>
+            <td class="text-left" rowspan="1" colspan="1">uayfy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">32</td>
+            <td class="text-left" rowspan="1" colspan="1">C_EncryptFinal</td>
+            <td class="text-left" rowspan="1" colspan="1">ufy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">33</td>
+            <td class="text-left" rowspan="1" colspan="1">C_DecryptInit</td>
+            <td class="text-left" rowspan="1" colspan="1">uMu</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">34</td>
+            <td class="text-left" rowspan="1" colspan="1">C_Decrypt</td>
+            <td class="text-left" rowspan="1" colspan="1">uayfy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">35</td>
+            <td class="text-left" rowspan="1" colspan="1">C_DecryptUpdate</td>
+            <td class="text-left" rowspan="1" colspan="1">uayfy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">36</td>
+            <td class="text-left" rowspan="1" colspan="1">C_DecryptFinal</td>
+            <td class="text-left" rowspan="1" colspan="1">ufy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">37</td>
+            <td class="text-left" rowspan="1" colspan="1">C_DigestInit</td>
+            <td class="text-left" rowspan="1" colspan="1">uM</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">38</td>
+            <td class="text-left" rowspan="1" colspan="1">C_Digest</td>
+            <td class="text-left" rowspan="1" colspan="1">uayfy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">39</td>
+            <td class="text-left" rowspan="1" colspan="1">C_DigestUpdate</td>
+            <td class="text-left" rowspan="1" colspan="1">uay</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">40</td>
+            <td class="text-left" rowspan="1" colspan="1">C_DigestKey</td>
+            <td class="text-left" rowspan="1" colspan="1">uu</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">41</td>
+            <td class="text-left" rowspan="1" colspan="1">C_DigestFinal</td>
+            <td class="text-left" rowspan="1" colspan="1">ufy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">42</td>
+            <td class="text-left" rowspan="1" colspan="1">C_SignInit</td>
+            <td class="text-left" rowspan="1" colspan="1">uMu</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">43</td>
+            <td class="text-left" rowspan="1" colspan="1">C_Sign</td>
+            <td class="text-left" rowspan="1" colspan="1">uayfy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">44</td>
+            <td class="text-left" rowspan="1" colspan="1">C_SignUpdate</td>
+            <td class="text-left" rowspan="1" colspan="1">uay</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">45</td>
+            <td class="text-left" rowspan="1" colspan="1">C_SignFinal</td>
+            <td class="text-left" rowspan="1" colspan="1">ufy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">46</td>
+            <td class="text-left" rowspan="1" colspan="1">C_SignRecoverInit</td>
+            <td class="text-left" rowspan="1" colspan="1">uMu</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">47</td>
+            <td class="text-left" rowspan="1" colspan="1">C_SignRecover</td>
+            <td class="text-left" rowspan="1" colspan="1">uayfy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">48</td>
+            <td class="text-left" rowspan="1" colspan="1">C_VerifyInit</td>
+            <td class="text-left" rowspan="1" colspan="1">uMu</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">49</td>
+            <td class="text-left" rowspan="1" colspan="1">C_Verify</td>
+            <td class="text-left" rowspan="1" colspan="1">uayay</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">50</td>
+            <td class="text-left" rowspan="1" colspan="1">C_VerifyUpdate</td>
+            <td class="text-left" rowspan="1" colspan="1">uay</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">51</td>
+            <td class="text-left" rowspan="1" colspan="1">C_VerifyFinal</td>
+            <td class="text-left" rowspan="1" colspan="1">uay</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">52</td>
+            <td class="text-left" rowspan="1" colspan="1">C_VerifyRecoverInit</td>
+            <td class="text-left" rowspan="1" colspan="1">uMu</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">53</td>
+            <td class="text-left" rowspan="1" colspan="1">C_VerifyRecover</td>
+            <td class="text-left" rowspan="1" colspan="1">uayfy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">54</td>
+            <td class="text-left" rowspan="1" colspan="1">C_DigestEncryptUpdate</td>
+            <td class="text-left" rowspan="1" colspan="1">uayfy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">55</td>
+            <td class="text-left" rowspan="1" colspan="1">C_DecryptDigestUpdate</td>
+            <td class="text-left" rowspan="1" colspan="1">uayfy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">56</td>
+            <td class="text-left" rowspan="1" colspan="1">C_SignEncryptUpdate</td>
+            <td class="text-left" rowspan="1" colspan="1">uayfy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">57</td>
+            <td class="text-left" rowspan="1" colspan="1">C_DecryptVerifyUpdate</td>
+            <td class="text-left" rowspan="1" colspan="1">uayfy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">58</td>
+            <td class="text-left" rowspan="1" colspan="1">C_GenerateKey</td>
+            <td class="text-left" rowspan="1" colspan="1">uMaA</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">59</td>
+            <td class="text-left" rowspan="1" colspan="1">C_GenerateKeyPair</td>
+            <td class="text-left" rowspan="1" colspan="1">uMaAaA</td>
+            <td class="text-left" rowspan="1" colspan="1">uu</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">60</td>
+            <td class="text-left" rowspan="1" colspan="1">C_WrapKey</td>
+            <td class="text-left" rowspan="1" colspan="1">uMuufy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">61</td>
+            <td class="text-left" rowspan="1" colspan="1">C_UnwrapKey</td>
+            <td class="text-left" rowspan="1" colspan="1">uMuayaA</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">62</td>
+            <td class="text-left" rowspan="1" colspan="1">C_DeriveKey</td>
+            <td class="text-left" rowspan="1" colspan="1">uMuaA</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">63</td>
+            <td class="text-left" rowspan="1" colspan="1">C_SeedRandom</td>
+            <td class="text-left" rowspan="1" colspan="1">uay</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">64</td>
+            <td class="text-left" rowspan="1" colspan="1">C_GenerateRandom</td>
+            <td class="text-left" rowspan="1" colspan="1">ufy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">65</td>
+            <td class="text-left" rowspan="1" colspan="1">C_WaitForSlotEvent</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">66</td>
+            <td class="text-left" rowspan="1" colspan="1">C_LoginUser</td>
+            <td class="text-left" rowspan="1" colspan="1">uuayay</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">67</td>
+            <td class="text-left" rowspan="1" colspan="1">C_SessionCancel</td>
+            <td class="text-left" rowspan="1" colspan="1">uu</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">68</td>
+            <td class="text-left" rowspan="1" colspan="1">C_MessageEncryptInit</td>
+            <td class="text-left" rowspan="1" colspan="1">uMu</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">69</td>
+            <td class="text-left" rowspan="1" colspan="1">C_EncryptMessage</td>
+            <td class="text-left" rowspan="1" colspan="1">uayayayfy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">70</td>
+            <td class="text-left" rowspan="1" colspan="1">C_EncryptMessageBegin</td>
+            <td class="text-left" rowspan="1" colspan="1">uayay</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">71</td>
+            <td class="text-left" rowspan="1" colspan="1">C_EncryptMessageNext</td>
+            <td class="text-left" rowspan="1" colspan="1">uayayfyu</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">72</td>
+            <td class="text-left" rowspan="1" colspan="1">C_MessageEncryptFinal</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">73</td>
+            <td class="text-left" rowspan="1" colspan="1">C_MessageDecryptInit</td>
+            <td class="text-left" rowspan="1" colspan="1">uMu</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">74</td>
+            <td class="text-left" rowspan="1" colspan="1">C_DecryptMessage</td>
+            <td class="text-left" rowspan="1" colspan="1">uayayayfy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">75</td>
+            <td class="text-left" rowspan="1" colspan="1">C_DecryptMessageBegin</td>
+            <td class="text-left" rowspan="1" colspan="1">uayay</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">76</td>
+            <td class="text-left" rowspan="1" colspan="1">C_DecryptMessageNext</td>
+            <td class="text-left" rowspan="1" colspan="1">uayayfyu</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">77</td>
+            <td class="text-left" rowspan="1" colspan="1">C_MessageDecryptFinal</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">78</td>
+            <td class="text-left" rowspan="1" colspan="1">C_MessageSignInit</td>
+            <td class="text-left" rowspan="1" colspan="1">uMu</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">79</td>
+            <td class="text-left" rowspan="1" colspan="1">C_SignMessage</td>
+            <td class="text-left" rowspan="1" colspan="1">uayayfy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">80</td>
+            <td class="text-left" rowspan="1" colspan="1">C_SignMessageBegin</td>
+            <td class="text-left" rowspan="1" colspan="1">uay</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">81</td>
+            <td class="text-left" rowspan="1" colspan="1">C_SignMessageNext</td>
+            <td class="text-left" rowspan="1" colspan="1">uayayyfy</td>
+            <td class="text-left" rowspan="1" colspan="1">ay</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">82</td>
+            <td class="text-left" rowspan="1" colspan="1">C_MessageSignFinal</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">83</td>
+            <td class="text-left" rowspan="1" colspan="1">C_MessageVerifyInit</td>
+            <td class="text-left" rowspan="1" colspan="1">uMu</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">84</td>
+            <td class="text-left" rowspan="1" colspan="1">C_VerifyMessage</td>
+            <td class="text-left" rowspan="1" colspan="1">uayayay</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">85</td>
+            <td class="text-left" rowspan="1" colspan="1">C_VerifyMessageBegin</td>
+            <td class="text-left" rowspan="1" colspan="1">uay</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">86</td>
+            <td class="text-left" rowspan="1" colspan="1">C_VerifyMessageNext</td>
+            <td class="text-left" rowspan="1" colspan="1">uayayay</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">87</td>
+            <td class="text-left" rowspan="1" colspan="1">C_MessageVerifyFinal</td>
+            <td class="text-left" rowspan="1" colspan="1">u</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">88</td>
+            <td class="text-left" rowspan="1" colspan="1">C_InitToken2</td>
+            <td class="text-left" rowspan="1" colspan="1">uays</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">89</td>
+            <td class="text-left" rowspan="1" colspan="1">C_DeriveKey2</td>
+            <td class="text-left" rowspan="1" colspan="1">uMuaA</td>
+            <td class="text-left" rowspan="1" colspan="1">uPu</td>
+          </tr>
+        </tbody>
+      </table>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-C">
+      <h2 id="name-authors-address">
+<a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Daiki Ueno</span></div>
+<div dir="auto" class="left"><span class="org">Red Hat, Inc.</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:dueno@redhat.com" class="email">dueno@redhat.com</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
