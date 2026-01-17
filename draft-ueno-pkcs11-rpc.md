@@ -62,7 +62,7 @@ informative:
 
 --- abstract
 
-This document specifies the PKCS #11 RPC (Remote Procedure Call) protocol, which enables remote access to PKCS #11 cryptographic modules. The protocol is designed for local communication scenarios such as forwarding PKCS #11 modules into sandboxed environments, accessing remote modules over SSH, and enabling inter-process communication between applications and cryptographic service providers. Unlike general-purpose key management protocols such as KMIP, the PKCS #11 RPC protocol prioritizes minimal overhead and faithful representation of PKCS #11 semantics.
+This document specifies the PKCS #11 RPC (Remote Procedure Call) protocol, which enables remote access to PKCS #11 cryptographic modules. The protocol is designed for local communication scenarios such as forwarding PKCS #11 modules into sandboxed environments and enabling inter-process communication between applications and cryptographic service providers. Unlike general-purpose key management protocols such as KMIP, the PKCS #11 RPC protocol prioritizes minimal overhead and faithful representation of PKCS #11 semantics.
 
 --- middle
 
@@ -70,11 +70,9 @@ This document specifies the PKCS #11 RPC (Remote Procedure Call) protocol, which
 
 PKCS #11 {{PKCS11-v2.40}} {{PKCS11-v3.1}} defines a platform-independent API (Cryptoki) for cryptographic tokens. Traditionally, PKCS #11 modules are loaded as shared libraries (via `dlopen` on Unix or `LoadLibrary` on Windows) within the same process address space as the calling application. However, several use cases require remote access to PKCS #11 functionality:
 
-- Forwarding system trust stores into flatpak sandboxes
 - Sandboxing proprietary PKCS #11 modules using bubblewrap or similar isolation tools
-- Accessing PKCS #11 modules over SSH connections
 - Delegating cryptographic operations from inside enclaves to host systems
-- Implementing PKCS #11 modules in foreign languages (e.g., Go, Rust) with process isolation
+- Forwarding system trust stores into sandboxes
 
 The PKCS #11 RPC protocol addresses these use cases by providing a wire protocol that faithfully represents PKCS #11 function calls and their semantics.
 
@@ -128,17 +126,17 @@ The protocol consists of:
 
 The protocol operates over a reliable, ordered, bidirectional byte stream. Three transport mechanisms are commonly used:
 
-## Pipe Transport (exec)
+## Pipe Transport
 
-The client launches a server process and communicates via stdin/stdout pipes. The remote specification begins with `|` followed by a command line:
+The client launches a server process and communicates via stdin/stdout pipes. In the p11-glue project {{P11-GLUE}}, this is implemented through the `p11-kit remote` helper command, which can be used to instruct the PKCS #11 module indirection in the configuration file begins with `|` followed by a command line:
 
 ~~~
-|ssh user@remote p11-kit remote /path/to/module.so
+|bwrap ... p11-kit remote /path/to/module.so
 ~~~
 
 ## Unix Domain Socket Transport
 
-The client connects to a server listening on a Unix domain socket. The remote specification uses the format:
+The client connects to a server listening on a Unix domain socket. In the p11-glue project {{P11-GLUE}}, this is implemented as a special configuration syntax:
 
 ~~~
 unix:path=/path/to/socket
@@ -146,7 +144,7 @@ unix:path=/path/to/socket
 
 ## VSOCK Transport
 
-For virtual machine scenarios, the protocol can operate over VSOCK sockets:
+For virtual machine scenarios, the protocol can operate over VSOCK sockets. In the p11-glue project {{P11-GLUE}}, this is implemented as a special configuration syntax:
 
 ~~~
 vsock:cid=CID;port=PORT
@@ -202,6 +200,11 @@ Client                           Server
    |                                |
    |------- Version 2 (0x02) ------>|
    |                                | (Server max = 1)
+   |<------ Version 1 (0x01) -------|
+   |                                |
+   |---- Reconnect ---------------->|
+   |                                |
+   |------- Version 1 (0x01) ------>|
    |<------ Version 1 (0x01) -------|
    |                                |
 ~~~
