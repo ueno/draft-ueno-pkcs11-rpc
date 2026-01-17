@@ -1,6 +1,6 @@
 ---
-title: "p11-kit RPC Protocol Specification"
-abbrev: "p11-kit RPC"
+title: "PKCS #11 RPC Protocol Specification"
+abbrev: "PKCS #11 RPC"
 category: info
 
 docname: draft-ueno-pkcs11-rpc-latest
@@ -12,7 +12,7 @@ v: 3
 # area: SEC
 # workgroup: Network Working Group
 keyword:
- - PKCS#11
+ - PKCS #11
  - cryptoki
  - RPC
  - HSM
@@ -53,7 +53,7 @@ informative:
       org: freedesktop.org
 
   P11-GLUE:
-    title: "p11-glue: Standardizing PKCS#11"
+    title: "p11-glue: Standardizing PKCS #11"
     target: https://p11-glue.github.io/p11-glue/
     author:
       org: p11-glue Project
@@ -62,31 +62,31 @@ informative:
 
 --- abstract
 
-This document specifies the p11-kit RPC (Remote Procedure Call) protocol, which enables remote access to PKCS#11 cryptographic modules. The protocol is designed for local communication scenarios such as forwarding PKCS#11 modules into sandboxed environments, accessing remote modules over SSH, and enabling inter-process communication between applications and cryptographic service providers. Unlike general-purpose key management protocols such as KMIP, the p11-kit RPC protocol prioritizes minimal overhead and faithful representation of PKCS#11 semantics.
+This document specifies the PKCS #11 RPC (Remote Procedure Call) protocol, which enables remote access to PKCS #11 cryptographic modules. The protocol is designed for local communication scenarios such as forwarding PKCS #11 modules into sandboxed environments, accessing remote modules over SSH, and enabling inter-process communication between applications and cryptographic service providers. Unlike general-purpose key management protocols such as KMIP, the PKCS #11 RPC protocol prioritizes minimal overhead and faithful representation of PKCS #11 semantics.
 
 --- middle
 
 # Introduction
 
-PKCS#11 {{PKCS11-v2.40}} {{PKCS11-v3.1}} defines a platform-independent API (Cryptoki) for cryptographic tokens. Traditionally, PKCS#11 modules are loaded as shared libraries (via `dlopen` on Unix or `LoadLibrary` on Windows) within the same process address space as the calling application. However, several use cases require remote access to PKCS#11 functionality:
+PKCS #11 {{PKCS11-v2.40}} {{PKCS11-v3.1}} defines a platform-independent API (Cryptoki) for cryptographic tokens. Traditionally, PKCS #11 modules are loaded as shared libraries (via `dlopen` on Unix or `LoadLibrary` on Windows) within the same process address space as the calling application. However, several use cases require remote access to PKCS #11 functionality:
 
 - Forwarding system trust stores into flatpak sandboxes
-- Sandboxing proprietary PKCS#11 modules using bubblewrap or similar isolation tools
-- Accessing PKCS#11 modules over SSH connections
+- Sandboxing proprietary PKCS #11 modules using bubblewrap or similar isolation tools
+- Accessing PKCS #11 modules over SSH connections
 - Delegating cryptographic operations from inside enclaves to host systems
-- Implementing PKCS#11 modules in foreign languages (e.g., Go, Rust) with process isolation
+- Implementing PKCS #11 modules in foreign languages (e.g., Go, Rust) with process isolation
 
-The p11-kit RPC protocol addresses these use cases by providing a wire protocol that faithfully represents PKCS#11 function calls and their semantics.
+The PKCS #11 RPC protocol addresses these use cases by providing a wire protocol that faithfully represents PKCS #11 function calls and their semantics.
 
 ## Relationship to Other Protocols
 
-While KMIP {{KMIP}} provides a comprehensive protocol for key management operations, the p11-kit RPC protocol serves a different purpose:
+While KMIP {{KMIP}} provides a comprehensive protocol for key management operations, the PKCS #11 RPC protocol serves a different purpose:
 
-- **Scope**: p11-kit RPC is specifically designed for exposing existing PKCS#11 modules over a communication channel, whereas KMIP is a general-purpose key management protocol
-- **Design Goals**: p11-kit RPC prioritizes minimal overhead and faithful PKCS#11 semantics, making it suitable for local IPC scenarios
-- **Use Cases**: p11-kit RPC is optimized for scenarios like sandbox forwarding and SSH tunneling, where existing PKCS#11 modules need to be accessed remotely without translation
+- **Scope**: PKCS #11 RPC is specifically designed for exposing existing PKCS #11 modules over a trusted communication channel, whereas KMIP is a general-purpose key management protocol
+- **Design Goals**: PKCS #11 RPC prioritizes minimal overhead and faithful PKCS #11 semantics, making it suitable for local IPC scenarios
+- **Use Cases**: PKCS #11 RPC is optimized for scenarios like sandbox forwarding and SSH tunneling, where existing PKCS #11 modules need to be accessed remotely without translation
 
-The protocol does not aim to be a general-purpose key management protocol or to provide features beyond what PKCS#11 itself offers.
+The protocol does not aim to be a general-purpose key management protocol or to provide features beyond what PKCS #11 itself offers.
 
 ## Conventions and Definitions
 
@@ -94,7 +94,7 @@ The protocol does not aim to be a general-purpose key management protocol or to 
 
 # Protocol Overview
 
-The p11-kit RPC protocol is a simple request-response protocol that serializes PKCS#11 function calls and their arguments into binary messages transmitted over a bidirectional byte stream (typically stdin/stdout, Unix domain sockets, or VSOCK sockets).
+The PKCS #11 RPC protocol is a simple request-response protocol that serializes PKCS #11 function calls and their arguments into binary messages transmitted over a bidirectional byte stream (typically stdin/stdout, Unix domain sockets, or VSOCK sockets).
 
 ## Architecture
 
@@ -102,25 +102,25 @@ The protocol consists of:
 
 1. **Transport Layer**: Provides a reliable bidirectional byte stream
 2. **Message Layer**: Defines message framing and serialization
-3. **Call Layer**: Maps PKCS#11 functions to RPC calls
+3. **Call Layer**: Maps PKCS #11 functions to RPC calls
 4. **Version Negotiation**: Allows clients and servers to agree on protocol capabilities
 
 ~~~
 ┌─────────────────────────────────────────────┐
-│          PKCS#11 Application                │
+│          PKCS #11 Application               │
 └─────────────────┬───────────────────────────┘
-                  │ PKCS#11 API
+                  │ PKCS #11 API
 ┌─────────────────▼───────────────────────────┐
-│          p11-kit RPC Client                 │
+│          PKCS #11 RPC Client                │
 └─────────────────┬───────────────────────────┘
                   │ RPC Protocol
                   │ (over transport)
 ┌─────────────────▼───────────────────────────┐
-│          p11-kit RPC Server                 │
+│          PKCS #11 RPC Server                │
 └─────────────────┬───────────────────────────┘
-                  │ PKCS#11 API
+                  │ PKCS #11 API
 ┌─────────────────▼───────────────────────────┐
-│     PKCS#11 Module (e.g., SoftHSM)          │
+│     PKCS #11 Module (e.g., SoftHSM)         │
 └─────────────────────────────────────────────┘
 ~~~
 
@@ -154,14 +154,14 @@ vsock:cid=CID;port=PORT
 
 # Version Negotiation
 
-The protocol supports version negotiation to enable backward compatibility and feature evolution. The negotiation occurs immediately after transport establishment and before any PKCS#11 operations.
+The protocol supports version negotiation to enable backward compatibility and feature evolution. The negotiation occurs immediately after transport establishment and before any PKCS #11 operations.
 
 ## Protocol Versions
 
 The following protocol versions are defined:
 
-- **Version 0**: Initial version supporting PKCS#11 2.x functions
-- **Version 1**: Adds PKCS#11 3.0 functions (message-based encryption, C_LoginUser, C_SessionCancel)
+- **Version 0**: Initial version supporting PKCS #11 2.x functions
+- **Version 1**: Adds PKCS #11 3.0 functions (message-based encryption, C_LoginUser, C_SessionCancel)
 - **Version 2**: Adds functions with mechanism parameter updates (C_InitToken2, C_DeriveKey2)
 
 ## Negotiation Procedure
@@ -244,7 +244,7 @@ Each message begins with a 12-byte header:
 
 Where:
 
-- **Call Code** (4 bytes): Unsigned 32-bit integer identifying the function call or response. For requests, this identifies the PKCS#11 function. For responses, this echoes the call code from the request.
+- **Call Code** (4 bytes): Unsigned 32-bit integer identifying the function call or response. For requests, this identifies the PKCS #11 function. For responses, this echoes the call code from the request.
 - **Options Length** (4 bytes): Length in bytes of the options area
 - **Buffer Length** (4 bytes): Length in bytes of the message body
 
@@ -262,7 +262,7 @@ The message body contains the serialized function arguments (for requests) or re
 
 Request messages consist of:
 
-1. Call ID (4 bytes): Identifies the PKCS#11 function
+1. Call ID (4 bytes): Identifies the PKCS #11 function
 2. Signature (variable): Null-terminated signature string
 3. Arguments (variable): Serialized function arguments according to the signature
 
@@ -280,7 +280,7 @@ Call codes are monotonically increasing integers assigned by the client for requ
 
 # Serialization Format
 
-The protocol uses a type-signature based serialization format inspired by the D-Bus message format {{DBUS}}. Each PKCS#11 function has associated request and response signatures that define the types and order of arguments.
+The protocol uses a type-signature based serialization format inspired by the D-Bus message format {{DBUS}}. Each PKCS #11 function has associated request and response signatures that define the types and order of arguments.
 
 ## Type Signatures
 
@@ -302,7 +302,7 @@ The following type codes are defined:
 ### Prefix Notation
 
 - `a_`: Array of type `_`. The serialization includes a count followed by elements.
-- `f_`: Buffer for type `_`. Used for output parameters where the buffer size is negotiated using the PKCS#11 convention (NULL pointer to query size, then actual buffer).
+- `f_`: Buffer for type `_`. Used for output parameters where the buffer size is negotiated using the PKCS #11 convention (NULL pointer to query size, then actual buffer).
 
 ## Primitive Types
 
@@ -312,7 +312,7 @@ Serialized as a single byte.
 
 ### CK_ULONG (type 'u')
 
-Serialized as a 32-bit unsigned integer in network byte order. Despite PKCS#11 defining CK_ULONG as potentially 64-bit on some platforms, the RPC protocol uses 32-bit encoding for portability across different data models (LP64, LLP64, etc.).
+Serialized as a 32-bit unsigned integer in network byte order. Despite PKCS #11 defining CK_ULONG as potentially 64-bit on some platforms, the RPC protocol uses 32-bit encoding for portability across different data models (LP64, LLP64, etc.).
 
 ### CK_VERSION (type 'v')
 
@@ -328,7 +328,7 @@ Serialized as:
 
 ### Space-padded String (type 's')
 
-Used for fixed-length PKCS#11 string fields (e.g., CK_TOKEN_INFO labels). Serialized as:
+Used for fixed-length PKCS #11 string fields (e.g., CK_TOKEN_INFO labels). Serialized as:
 1. Length (4 bytes): Total length of the string field
 2. Bytes (variable): UTF-8 encoded string, space-padded to length
 
@@ -376,7 +376,7 @@ For attribute array values (e.g., CKA_WRAP_TEMPLATE), the value data is recursiv
 
 ### Attribute Buffer (type 'fA')
 
-Used for output attribute arrays where the application provides templates. Follows the PKCS#11 convention for retrieving variable-length values:
+Used for output attribute arrays where the application provides templates. Follows the PKCS #11 convention for retrieving variable-length values:
 
 1. Client sends attribute template with pValue pointers
 2. Server responds with:
@@ -386,7 +386,7 @@ Used for output attribute arrays where the application provides templates. Follo
 
 ## Variable-Length Output Convention
 
-The protocol implements the PKCS#11 convention for variable-length output parameters:
+The protocol implements the PKCS #11 convention for variable-length output parameters:
 
 1. Client sends `f_` (buffer) with length 0 or requested size
 2. Server responds with:
@@ -397,15 +397,15 @@ This applies to functions like C_GetAttributeValue, C_Encrypt, C_GetMechanismLis
 
 # Function Call Mappings
 
-Each PKCS#11 function is mapped to an RPC call with a unique call identifier and type signature.
+Each PKCS #11 function is mapped to an RPC call with a unique call identifier and type signature.
 
 ## Call Identifiers
 
 Call identifiers are defined in the range:
 
 - 0: P11_RPC_CALL_ERROR (error response)
-- 1-57: PKCS#11 2.x functions
-- 58-79: PKCS#11 3.0 functions (version 1+)
+- 1-57: PKCS #11 2.x functions
+- 58-79: PKCS #11 3.0 functions (version 1+)
 - 80-81: Extended functions with mechanism parameter updates (version 2+)
 
 ## Example Function Mappings
@@ -456,9 +456,9 @@ Response:
   - Ciphertext data (ay)
 ~~~
 
-## PKCS#11 3.0 Functions (Version 1+)
+## PKCS #11 3.0 Functions (Version 1+)
 
-Version 1 of the protocol adds support for PKCS#11 3.0 functions:
+Version 1 of the protocol adds support for PKCS #11 3.0 functions:
 
 - C_LoginUser (call ID 58): Enhanced login with username
 - C_SessionCancel (call ID 59): Cancel ongoing session operations
@@ -495,7 +495,7 @@ This section summarizes the functional differences between protocol versions.
 
 ## Version 0
 
-Initial protocol version supporting PKCS#11 2.40 functions:
+Initial protocol version supporting PKCS #11 2.40 functions:
 
 - All functions from C_Initialize through C_WaitForSlotEvent
 - Call IDs 1-57
@@ -503,7 +503,7 @@ Initial protocol version supporting PKCS#11 2.40 functions:
 
 ## Version 1
 
-Adds PKCS#11 3.0 function support:
+Adds PKCS #11 3.0 function support:
 
 - Version negotiation support
 - C_LoginUser and C_SessionCancel
@@ -528,9 +528,9 @@ Backward compatibility:
 
 # Error Handling
 
-## PKCS#11 Return Codes
+## PKCS #11 Return Codes
 
-All PKCS#11 return codes (CK_RV) are transmitted as unsigned 32-bit integers in response messages. The protocol does not define additional error codes beyond those in PKCS#11.
+All PKCS #11 return codes (CK_RV) are transmitted as unsigned 32-bit integers in response messages. The protocol does not define additional error codes beyond those in PKCS #11.
 
 ## Protocol Errors
 
@@ -580,7 +580,7 @@ For scenarios requiring confidentiality and integrity without transport-level se
 
 ## Sandboxing
 
-A key use case for the protocol is to sandbox untrusted PKCS#11 modules. When sandboxing:
+A key use case for the protocol is to sandbox untrusted PKCS #11 modules. When sandboxing:
 
 - The server process should run with minimal privileges
 - File system access should be restricted using tools like bubblewrap
@@ -594,7 +594,7 @@ The protocol transmits sensitive cryptographic material (keys, PINs, plaintext) 
 - Ensure transport channels are appropriately secured
 - Zero sensitive memory after use
 - Avoid logging sensitive parameters
-- Respect PKCS#11 CKA_SENSITIVE and CKA_EXTRACTABLE attributes
+- Respect PKCS #11 CKA_SENSITIVE and CKA_EXTRACTABLE attributes
 
 ## Input Validation
 
@@ -602,7 +602,7 @@ Servers must validate all input parameters:
 
 - Array lengths must be checked against buffer sizes
 - Attribute types must be validated
-- Mechanism parameters must be validated according to PKCS#11 specifications
+- Mechanism parameters must be validated according to PKCS #11 specifications
 - Call IDs must be within valid ranges
 
 Failure to validate inputs may lead to buffer overflows, denial of service, or information disclosure.
@@ -636,10 +636,10 @@ Implementations should optimize common cases where sizes are known or bounded.
 
 ## Mechanism Parameter Handling
 
-Different PKCS#11 mechanisms use different parameter structures. Implementations must:
+Different PKCS #11 mechanisms use different parameter structures. Implementations must:
 
 - Maintain tables mapping mechanism types to parameter structures
-- Validate parameter structures according to PKCS#11 specifications
+- Validate parameter structures according to PKCS #11 specifications
 - Handle vendor-specific mechanisms gracefully
 
 ## Threading and Concurrency
@@ -666,12 +666,12 @@ For high-performance scenarios:
 # Acknowledgments
 {:numbered="false"}
 
-The author would like to thank Stef Walter for creating the p11-kit project and designing the initial RPC protocol. Thanks also to the p11-glue community for their work on standardizing PKCS#11 practices.
+The author would like to thank Stef Walter for creating the p11-kit project and designing the initial RPC protocol. Thanks also to the p11-glue community for their work on standardizing PKCS #11 practices.
 
 # Complete Function Signature Table
 {:numbered="false"}
 
-This appendix provides a complete reference of all PKCS#11 function signatures in the protocol.
+This appendix provides a complete reference of all PKCS #11 function signatures in the protocol.
 
 | Call ID | Function Name              | Request Signature | Response Signature |
 |---------|----------------------------|-------------------|--------------------|
