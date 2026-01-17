@@ -1456,7 +1456,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
             <p id="section-1.1-2.2.1"><strong>Design Goals</strong>: PKCS #11 RPC prioritizes minimal overhead and faithful PKCS #11 semantics, making it suitable for local IPC scenarios<a href="#section-1.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.1-2.3">
-            <p id="section-1.1-2.3.1"><strong>Use Cases</strong>: PKCS #11 RPC is optimized for scenarios like sandbox forwarding and SSH tunneling, where existing PKCS #11 modules need to be accessed remotely without translation<a href="#section-1.1-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-1.1-2.3.1"><strong>Use Cases</strong>: PKCS #11 RPC is optimized for scenarios like sandbox forwarding, where existing PKCS #11 modules need to be accessed remotely without translation<a href="#section-1.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-1.1-3">The protocol does not aim to be a general-purpose key management protocol or to provide features beyond what PKCS #11 itself offers.<a href="#section-1.1-3" class="pilcrow">¶</a></p>
@@ -2414,13 +2414,10 @@ Response signature: <code>"uPu"</code> (derived_key_handle, updated_mechanism_pa
 <p id="section-10.1-1">The protocol itself does not provide authentication mechanisms. Authentication is delegated to the transport layer:<a href="#section-10.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-10.1-2.1">
-            <p id="section-10.1-2.1.1">For SSH-based transports: SSH authentication<a href="#section-10.1-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-10.1-2.1.1">For Unix domain sockets: File system permissions and optional SO_PEERCRED<a href="#section-10.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-10.1-2.2">
-            <p id="section-10.1-2.2.1">For Unix domain sockets: File system permissions and optional SO_PEERCRED<a href="#section-10.1-2.2.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-10.1-2.3">
-            <p id="section-10.1-2.3.1">For VSOCK: VM isolation boundaries<a href="#section-10.1-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-10.1-2.2.1">For VSOCK: VM isolation boundaries<a href="#section-10.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2433,13 +2430,10 @@ Response signature: <code>"uPu"</code> (derived_key_handle, updated_mechanism_pa
 <p id="section-10.2-1">The protocol does not provide encryption or integrity protection. These properties must be provided by:<a href="#section-10.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-10.2-2.1">
-            <p id="section-10.2-2.1.1">Transport layer encryption (e.g., SSH)<a href="#section-10.2-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-10.2-2.1.1">Operating system isolation (e.g., Unix domain sockets with file system permissions)<a href="#section-10.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-10.2-2.2">
-            <p id="section-10.2-2.2.1">Operating system isolation (e.g., Unix domain sockets with file system permissions)<a href="#section-10.2-2.2.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-10.2-2.3">
-            <p id="section-10.2-2.3.1">Hypervisor isolation (e.g., VSOCK between VMs)<a href="#section-10.2-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-10.2-2.2.1">Hypervisor isolation (e.g., VSOCK between VMs)<a href="#section-10.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-10.2-3">For scenarios requiring confidentiality and integrity without transport-level security, implementers should use TLS or similar protocols.<a href="#section-10.2-3" class="pilcrow">¶</a></p>

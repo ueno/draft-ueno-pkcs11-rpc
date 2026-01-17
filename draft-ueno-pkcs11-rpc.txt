@@ -179,8 +179,8 @@ Table of Contents
       scenarios
 
    *  *Use Cases*: PKCS #11 RPC is optimized for scenarios like sandbox
-      forwarding and SSH tunneling, where existing PKCS #11 modules need
-      to be accessed remotely without translation
+      forwarding, where existing PKCS #11 modules need to be accessed
+      remotely without translation
 
    The protocol does not aim to be a general-purpose key management
    protocol or to provide features beyond what PKCS #11 itself offers.
@@ -773,8 +773,6 @@ Table of Contents
    The protocol itself does not provide authentication mechanisms.
    Authentication is delegated to the transport layer:
 
-   *  For SSH-based transports: SSH authentication
-
    *  For Unix domain sockets: File system permissions and optional
       SO_PEERCRED
 
@@ -784,8 +782,6 @@ Table of Contents
 
    The protocol does not provide encryption or integrity protection.
    These properties must be provided by:
-
-   *  Transport layer encryption (e.g., SSH)
 
    *  Operating system isolation (e.g., Unix domain sockets with file
       system permissions)
