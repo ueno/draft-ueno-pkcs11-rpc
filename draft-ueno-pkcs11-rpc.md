@@ -323,11 +323,11 @@ Serialized as two bytes: major version followed by minor version.
 
 ## String Types
 
-### Null-terminated String (type 'z')
+### NUL-terminated String (type 'z')
 
 Serialized as:
-1. Length (4 bytes): Number of bytes including null terminator
-2. Bytes (variable): UTF-8 encoded string with null terminator
+1. Length (4 bytes): Number of bytes including NUL (0x0) terminator
+2. Bytes (variable): UTF-8 encoded string with NUL (0x0) terminator
 
 ### Space-padded String (type 's')
 
@@ -343,7 +343,7 @@ Serialized as:
 1. Length (4 bytes): Number of bytes
 2. Bytes (variable): Array contents
 
-### ULONG Array (type 'au')
+### CK_ULONG Array (type 'au')
 
 Serialized as:
 1. Count (4 bytes): Number of elements
