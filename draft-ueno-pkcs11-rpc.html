@@ -1248,7 +1248,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
                 <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-string-types" class="internal xref">String Types</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3.2.1">
-                    <p id="section-toc.1-1.6.2.3.2.1.1"><a href="#section-6.3.1" class="auto internal xref">6.3.1</a>.  <a href="#name-null-terminated-string-type" class="internal xref">Null-terminated String (type 'z')</a></p>
+                    <p id="section-toc.1-1.6.2.3.2.1.1"><a href="#section-6.3.1" class="auto internal xref">6.3.1</a>.  <a href="#name-nul-terminated-string-type-" class="internal xref">NUL-terminated String (type 'z')</a></p>
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3.2.2">
                     <p id="section-toc.1-1.6.2.3.2.2.1"><a href="#section-6.3.2" class="auto internal xref">6.3.2</a>.  <a href="#name-space-padded-string-type-s" class="internal xref">Space-padded String (type 's')</a></p>
@@ -1262,7 +1262,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
                     <p id="section-toc.1-1.6.2.4.2.1.1"><a href="#section-6.4.1" class="auto internal xref">6.4.1</a>.  <a href="#name-byte-array-type-ay" class="internal xref">Byte Array (type 'ay')</a></p>
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4.2.2">
-                    <p id="section-toc.1-1.6.2.4.2.2.1"><a href="#section-6.4.2" class="auto internal xref">6.4.2</a>.  <a href="#name-ulong-array-type-au" class="internal xref">ULONG Array (type 'au')</a></p>
+                    <p id="section-toc.1-1.6.2.4.2.2.1"><a href="#section-6.4.2" class="auto internal xref">6.4.2</a>.  <a href="#name-ck_ulong-array-type-au" class="internal xref">CK_ULONG Array (type 'au')</a></p>
 </li>
                 </ul>
 </li>
@@ -1953,14 +1953,14 @@ Client                           Server (v0 only)
         <h3 id="name-string-types">
 <a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-string-types" class="section-name selfRef">String Types</a>
         </h3>
-<div id="null-terminated-string-type-z">
+<div id="nul-terminated-string-type-z">
 <section id="section-6.3.1">
-          <h4 id="name-null-terminated-string-type">
-<a href="#section-6.3.1" class="section-number selfRef">6.3.1. </a><a href="#name-null-terminated-string-type" class="section-name selfRef">Null-terminated String (type 'z')</a>
+          <h4 id="name-nul-terminated-string-type-">
+<a href="#section-6.3.1" class="section-number selfRef">6.3.1. </a><a href="#name-nul-terminated-string-type-" class="section-name selfRef">NUL-terminated String (type 'z')</a>
           </h4>
 <p id="section-6.3.1-1">Serialized as:
-1. Length (4 bytes): Number of bytes including null terminator
-2. Bytes (variable): UTF-8 encoded string with null terminator<a href="#section-6.3.1-1" class="pilcrow">¶</a></p>
+1. Length (4 bytes): Number of bytes including NUL (0x0) terminator
+2. Bytes (variable): UTF-8 encoded string with NUL (0x0) terminator<a href="#section-6.3.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="space-padded-string-type-s">
@@ -1990,10 +1990,10 @@ Client                           Server (v0 only)
 2. Bytes (variable): Array contents<a href="#section-6.4.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="ulong-array-type-au">
+<div id="ckulong-array-type-au">
 <section id="section-6.4.2">
-          <h4 id="name-ulong-array-type-au">
-<a href="#section-6.4.2" class="section-number selfRef">6.4.2. </a><a href="#name-ulong-array-type-au" class="section-name selfRef">ULONG Array (type 'au')</a>
+          <h4 id="name-ck_ulong-array-type-au">
+<a href="#section-6.4.2" class="section-number selfRef">6.4.2. </a><a href="#name-ck_ulong-array-type-au" class="section-name selfRef">CK_ULONG Array (type 'au')</a>
           </h4>
 <p id="section-6.4.2-1">Serialized as:
 1. Count (4 bytes): Number of elements

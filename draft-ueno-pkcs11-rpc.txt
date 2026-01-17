@@ -93,11 +93,11 @@ Table of Contents
        6.2.2.  CK_ULONG (type 'u')
        6.2.3.  CK_VERSION (type 'v')
      6.3.  String Types
-       6.3.1.  Null-terminated String (type 'z')
+       6.3.1.  NUL-terminated String (type 'z')
        6.3.2.  Space-padded String (type 's')
      6.4.  Array Types
        6.4.1.  Byte Array (type 'ay')
-       6.4.2.  ULONG Array (type 'au')
+       6.4.2.  CK_ULONG Array (type 'au')
      6.5.  Complex Types
        6.5.1.  CK_MECHANISM (type 'M')
        6.5.2.  CK_ATTRIBUTE (type 'A')
@@ -489,11 +489,11 @@ Table of Contents
 
 6.3.  String Types
 
-6.3.1.  Null-terminated String (type 'z')
+6.3.1.  NUL-terminated String (type 'z')
 
-   Serialized as: 1.  Length (4 bytes): Number of bytes including null
-   terminator 2.  Bytes (variable): UTF-8 encoded string with null
-   terminator
+   Serialized as: 1.  Length (4 bytes): Number of bytes including NUL
+   (0x0) terminator 2.  Bytes (variable): UTF-8 encoded string with NUL
+   (0x0) terminator
 
 6.3.2.  Space-padded String (type 's')
 
@@ -509,7 +509,7 @@ Table of Contents
    Serialized as: 1.  Length (4 bytes): Number of bytes 2.  Bytes
    (variable): Array contents
 
-6.4.2.  ULONG Array (type 'au')
+6.4.2.  CK_ULONG Array (type 'au')
 
    Serialized as: 1.  Count (4 bytes): Number of elements 2.  Elements
    (variable): Each element as a 4-byte unsigned integer
