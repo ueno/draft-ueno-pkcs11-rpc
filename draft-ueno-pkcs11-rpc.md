@@ -1,5 +1,5 @@
 ---
-title: "Simple PKCS #11 RPC Protocol"
+title: "Simple PKCS #11 Remote Procedure Call (RPC) Protocol"
 abbrev: "PKCS #11 RPC"
 category: info
 
