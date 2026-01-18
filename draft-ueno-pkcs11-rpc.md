@@ -1,5 +1,5 @@
 ---
-title: "PKCS #11 RPC Protocol Specification"
+title: "Simple PKCS #11 RPC Protocol"
 abbrev: "PKCS #11 RPC"
 category: info
 

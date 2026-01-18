@@ -1,8 +1,8 @@
 <!-- regenerate: on (set to off if you edit this file) -->
 
-# PKCS #11 RPC Protocol Specification
+# Simple PKCS #11 RPC Protocol
 
-This is the working area for the individual Internet-Draft, "PKCS #11 RPC Protocol Specification".
+This is the working area for the individual Internet-Draft, "Simple PKCS #11 RPC Protocol".
 
 * [Editor's Copy](https://ueno.github.io/draft-ueno-pkcs11-rpc/#go.draft-ueno-pkcs11-rpc.html)
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-ueno-pkcs11-rpc)
