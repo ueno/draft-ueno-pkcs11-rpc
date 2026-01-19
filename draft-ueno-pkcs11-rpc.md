@@ -124,14 +124,14 @@ The protocol consists of:
 
 # Transport Layer
 
-The protocol operates over a reliable, ordered, bidirectional byte stream. Three transport mechanisms are commonly used:
+The protocol operates over a reliable, ordered, bidirectional byte stream. Three transport mechanisms are commonly used: pipe, Unix domain socket, and VSOCK. In the p11-glue project {{P11-GLUE}}, this is configured in module configuration files with the `remote:` keyword.
 
 ## Pipe Transport
 
-The client launches a server process and communicates via stdin/stdout pipes. In the p11-glue project {{P11-GLUE}}, this is implemented through the `p11-kit remote` helper command, which can be used to instruct the PKCS #11 module indirection in the configuration file begins with `|` followed by a command line:
+The client launches a server process and communicates via stdin/stdout pipes. In the p11-glue project, it is implemented through the `p11-kit remote` helper command, which can be used to instruct the PKCS #11 module indirection in the configuration file begins with `|` followed by a command line:
 
 ~~~
-|bwrap ... p11-kit remote /path/to/module.so
+remote: |bwrap --unshare-all --dir /tmp --ro-bind /etc/conf /etc/conf --proc /proc --dev /dev --ro-bind /usr /usr --symlink /usr/lib64 /lib64 --ro-bind /run/pcscd /run/pcscd p11-kit remote /usr/lib64/pkcs11/libpkcs11module.so
 ~~~
 
 ## Unix Domain Socket Transport
@@ -139,7 +139,7 @@ The client launches a server process and communicates via stdin/stdout pipes. In
 The client connects to a server listening on a Unix domain socket. In the p11-glue project {{P11-GLUE}}, this is implemented as a special configuration syntax:
 
 ~~~
-unix:path=/path/to/socket
+remote: unix:path=/path/to/socket
 ~~~
 
 ## VSOCK Transport
@@ -147,7 +147,7 @@ unix:path=/path/to/socket
 For virtual machine scenarios, the protocol can operate over VSOCK sockets. In the p11-glue project {{P11-GLUE}}, this is implemented as a special configuration syntax:
 
 ~~~
-vsock:cid=CID;port=PORT
+remote: vsock:cid=CID;port=PORT
 ~~~
 
 # Version Negotiation
