@@ -3,9 +3,9 @@
 
 
 Network Working Group                                            D. Ueno
-Internet-Draft                                             Red Hat, Inc.
-Intended status: Informational                           18 January 2026
-Expires: 22 July 2026
+Internet-Draft                                               Z. Fridrich
+Intended status: Informational                             Red Hat, Inc.
+Expires: 23 July 2026                                    19 January 2026
 
 
           Simple PKCS #11 Remote Procedure Call (RPC) Protocol
@@ -45,7 +45,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 22 July 2026.
+   This Internet-Draft will expire on 23 July 2026.
 
 Copyright Notice
 
@@ -141,7 +141,7 @@ Table of Contents
      13.2.  Informative References
    Acknowledgments
    Complete Function Signature Table
-   Author's Address
+   Authors' Addresses
 
 1.  Introduction
 
@@ -233,17 +233,19 @@ Table of Contents
 3.  Transport Layer
 
    The protocol operates over a reliable, ordered, bidirectional byte
-   stream.  Three transport mechanisms are commonly used:
+   stream.  Three transport mechanisms are commonly used: pipe, Unix
+   domain socket, and VSOCK.  In the p11-glue project [P11-GLUE], this
+   is configured in module configuration files with the remote: keyword.
 
 3.1.  Pipe Transport
 
    The client launches a server process and communicates via stdin/
-   stdout pipes.  In the p11-glue project [P11-GLUE], this is
-   implemented through the p11-kit remote helper command, which can be
-   used to instruct the PKCS #11 module indirection in the configuration
-   file begins with | followed by a command line:
+   stdout pipes.  In the p11-glue project, it is implemented through the
+   p11-kit remote helper command, which can be used to instruct the PKCS
+   #11 module indirection in the configuration file begins with |
+   followed by a command line:
 
-   |bwrap ... p11-kit remote /path/to/module.so
+remote: |bwrap --unshare-all --dir /tmp --ro-bind /etc/conf /etc/conf --proc /proc --dev /dev --ro-bind /usr /usr --symlink /usr/lib64 /lib64 --ro-bind /run/pcscd /run/pcscd p11-kit remote /usr/lib64/pkcs11/libpkcs11module.so
 
 3.2.  Unix Domain Socket Transport
 
@@ -251,7 +253,7 @@ Table of Contents
    In the p11-glue project [P11-GLUE], this is implemented as a special
    configuration syntax:
 
-   unix:path=/path/to/socket
+   remote: unix:path=/path/to/socket
 
 3.3.  VSOCK Transport
 
@@ -259,7 +261,7 @@ Table of Contents
    sockets.  In the p11-glue project [P11-GLUE], this is implemented as
    a special configuration syntax:
 
-   vsock:cid=CID;port=PORT
+   remote: vsock:cid=CID;port=PORT
 
 4.  Version Negotiation
 
@@ -1149,8 +1151,13 @@ Complete Function Signature Table
 
                                  Table 2
 
-Author's Address
+Authors' Addresses
 
    Daiki Ueno
    Red Hat, Inc.
    Email: dueno@redhat.com
+
+
+   Zoltán Fridrich
+   Red Hat, Inc.
+   Email: zfridric@redhat.com
