@@ -319,7 +319,7 @@ Serialized as a single byte.
 
 ### CK_ULONG (type 'u')
 
-Serialized as a 32-bit unsigned integer in network byte order. Despite PKCS #11 defining CK_ULONG as potentially 64-bit on some platforms, the RPC protocol uses 32-bit encoding for portability across different data models (LP64, LLP64, etc.).
+Serialized as a 64-bit unsigned integer in network byte order.
 
 ### CK_VERSION (type 'v')
 
@@ -622,13 +622,13 @@ The protocol uses private handshake identifiers and does not require registry al
 
 ## Endianness and Data Models
 
-The protocol uses network byte order (big-endian) for all multi-byte integers. The 32-bit encoding of CK_ULONG ensures interoperability across different platforms:
+The protocol uses network byte order (big-endian) for all multi-byte integers. The 64-bit encoding of CK_ULONG ensures interoperability across different platforms:
 
 - LP64 systems (Unix/Linux 64-bit): CK_ULONG is 64-bit natively
 - LLP64 systems (Windows 64-bit): CK_ULONG is 32-bit natively
 - ILP32 systems (32-bit): CK_ULONG is 32-bit natively
 
-Implementations must handle this conversion carefully, particularly when CK_ULONG values exceed 32-bit range on LP64 systems.
+Implementations must handle this conversion carefully, particularly when CK_ULONG values exceed 32-bit range on LLP64 systems.
 
 ## Buffer Management
 
