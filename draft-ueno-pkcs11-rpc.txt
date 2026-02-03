@@ -5,7 +5,7 @@
 Network Working Group                                            D. Ueno
 Internet-Draft                                               Z. Fridrich
 Intended status: Informational                             Red Hat, Inc.
-Expires: 23 July 2026                                    19 January 2026
+Expires: 7 August 2026                                   3 February 2026
 
 
           Simple PKCS #11 Remote Procedure Call (RPC) Protocol
@@ -45,7 +45,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 23 July 2026.
+   This Internet-Draft will expire on 7 August 2026.
 
 Copyright Notice
 
@@ -480,10 +480,7 @@ remote: |bwrap --unshare-all --dir /tmp --ro-bind /etc/conf /etc/conf --proc /pr
 
 6.2.2.  CK_ULONG (type 'u')
 
-   Serialized as a 32-bit unsigned integer in network byte order.
-   Despite PKCS #11 defining CK_ULONG as potentially 64-bit on some
-   platforms, the RPC protocol uses 32-bit encoding for portability
-   across different data models (LP64, LLP64, etc.).
+   Serialized as a 64-bit unsigned integer in network byte order.
 
 6.2.3.  CK_VERSION (type 'v')
 
@@ -851,7 +848,7 @@ remote: |bwrap --unshare-all --dir /tmp --ro-bind /etc/conf /etc/conf --proc /pr
 12.1.  Endianness and Data Models
 
    The protocol uses network byte order (big-endian) for all multi-byte
-   integers.  The 32-bit encoding of CK_ULONG ensures interoperability
+   integers.  The 64-bit encoding of CK_ULONG ensures interoperability
    across different platforms:
 
    *  LP64 systems (Unix/Linux 64-bit): CK_ULONG is 64-bit natively
@@ -861,7 +858,7 @@ remote: |bwrap --unshare-all --dir /tmp --ro-bind /etc/conf /etc/conf --proc /pr
    *  ILP32 systems (32-bit): CK_ULONG is 32-bit natively
 
    Implementations must handle this conversion carefully, particularly
-   when CK_ULONG values exceed 32-bit range on LP64 systems.
+   when CK_ULONG values exceed 32-bit range on LLP64 systems.
 
 12.2.  Buffer Management
 

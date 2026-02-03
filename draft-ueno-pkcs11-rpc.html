@@ -28,7 +28,7 @@
     pycountry 24.6.1
     PyYAML 6.0.3
     requests 2.32.5
-    wcwidth 0.2.14
+    wcwidth 0.3.0
 -->
 <link href="draft-ueno-pkcs11-rpc.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -569,6 +569,7 @@ aside, blockquote {
 }
 blockquote {
   margin: 1em 0;
+  border-left: 2px var(--pilcrow-strong) solid;
 }
 cite {
   display: block;
@@ -639,7 +640,7 @@ a.pilcrow {
   }
 }
 @media not print {
-  :hover > a.pilcrow {
+  :hover > a.pilcrow, a.pilcrow:focus {
     opacity: 1;
   }
   a.pilcrow[href]:hover {
@@ -1047,11 +1048,11 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">PKCS #11 RPC</td>
-<td class="right">January 2026</td>
+<td class="right">February 2026</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">Ueno &amp; Fridrich</td>
-<td class="center">Expires 23 July 2026</td>
+<td class="center">Expires 7 August 2026</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1064,12 +1065,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-ueno-pkcs11-rpc-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-01-19" class="published">19 January 2026</time>
+<time datetime="2026-02-03" class="published">3 February 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2026-07-23">23 July 2026</time></dd>
+<dd class="expires"><time datetime="2026-08-07">7 August 2026</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1115,7 +1116,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 23 July 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 7 August 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1940,7 +1941,7 @@ Client                           Server (v0 only)
           <h4 id="name-ck_ulong-type-u">
 <a href="#section-6.2.2" class="section-number selfRef">6.2.2. </a><a href="#name-ck_ulong-type-u" class="section-name selfRef">CK_ULONG (type 'u')</a>
           </h4>
-<p id="section-6.2.2-1">Serialized as a 32-bit unsigned integer in network byte order. Despite PKCS #11 defining CK_ULONG as potentially 64-bit on some platforms, the RPC protocol uses 32-bit encoding for portability across different data models (LP64, LLP64, etc.).<a href="#section-6.2.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.2.2-1">Serialized as a 64-bit unsigned integer in network byte order.<a href="#section-6.2.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="ckversion-type-v">
@@ -2532,7 +2533,7 @@ Response signature: <code>"uPu"</code> (derived_key_handle, updated_mechanism_pa
         <h3 id="name-endianness-and-data-models">
 <a href="#section-12.1" class="section-number selfRef">12.1. </a><a href="#name-endianness-and-data-models" class="section-name selfRef">Endianness and Data Models</a>
         </h3>
-<p id="section-12.1-1">The protocol uses network byte order (big-endian) for all multi-byte integers. The 32-bit encoding of CK_ULONG ensures interoperability across different platforms:<a href="#section-12.1-1" class="pilcrow">¶</a></p>
+<p id="section-12.1-1">The protocol uses network byte order (big-endian) for all multi-byte integers. The 64-bit encoding of CK_ULONG ensures interoperability across different platforms:<a href="#section-12.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-12.1-2.1">
             <p id="section-12.1-2.1.1">LP64 systems (Unix/Linux 64-bit): CK_ULONG is 64-bit natively<a href="#section-12.1-2.1.1" class="pilcrow">¶</a></p>
@@ -2544,7 +2545,7 @@ Response signature: <code>"uPu"</code> (derived_key_handle, updated_mechanism_pa
             <p id="section-12.1-2.3.1">ILP32 systems (32-bit): CK_ULONG is 32-bit natively<a href="#section-12.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-12.1-3">Implementations must handle this conversion carefully, particularly when CK_ULONG values exceed 32-bit range on LP64 systems.<a href="#section-12.1-3" class="pilcrow">¶</a></p>
+<p id="section-12.1-3">Implementations must handle this conversion carefully, particularly when CK_ULONG values exceed 32-bit range on LLP64 systems.<a href="#section-12.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="buffer-management">
