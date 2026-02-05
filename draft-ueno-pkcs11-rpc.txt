@@ -90,21 +90,17 @@ Table of Contents
      5.4.  Call Codes
    6.  Serialization Format
      6.1.  Type Signatures
-       6.1.1.  Prefix Notation
      6.2.  Primitive Types
        6.2.1.  CK_BYTE (type 'y')
        6.2.2.  CK_ULONG (type 'u')
-       6.2.3.  CK_VERSION (type 'v')
      6.3.  String Types
        6.3.1.  NUL-terminated String (type 'z')
        6.3.2.  Space-padded String (type 's')
      6.4.  Array Types
-       6.4.1.  Byte Array (type 'ay')
-       6.4.2.  CK_ULONG Array (type 'au')
-     6.5.  Complex Types
-       6.5.1.  CK_MECHANISM (type 'M')
-       6.5.2.  CK_ATTRIBUTE (type 'A')
-       6.5.3.  Attribute Buffer (type 'fA')
+     6.5.  Record Types
+       6.5.1.  CK_VERSION (type 'v')
+       6.5.2.  CK_MECHANISM (type 'M')
+       6.5.3.  CK_ATTRIBUTE (type 'A')
      6.6.  Variable-Length Output Convention
    7.  Function Call Mappings
      7.1.  Call Identifiers
@@ -484,7 +480,11 @@ exec:command="bwrap --unshare-all --dir /tmp --ro-bind /etc/conf /etc/conf --pro
 
 6.1.  Type Signatures
 
-   The following type codes are defined:
+   Type signatures comprises a series of type codes as defined below.
+   Most of them represent a single type, such as CK_BYTE, while a couple
+   of them, a and f, represent arrays and output buffers of elements in
+   other types signified by the following type code.  For example, ay
+   means an array of CK_BYTE.
 
                +======+===================================+
                | Code | Meaning                           |
@@ -512,15 +512,6 @@ exec:command="bwrap --unshare-all --dir /tmp --ro-bind /etc/conf /etc/conf --pro
 
                                  Table 1
 
-6.1.1.  Prefix Notation
-
-   *  a_: Array of type _. The serialization includes a count followed
-      by elements.
-
-   *  f_: Buffer for type _. Used for output parameters where the buffer
-      size is negotiated using the PKCS #11 convention (NULL pointer to
-      query size, then actual buffer).
-
 6.2.  Primitive Types
 
 6.2.1.  CK_BYTE (type 'y')
@@ -531,40 +522,44 @@ exec:command="bwrap --unshare-all --dir /tmp --ro-bind /etc/conf /etc/conf --pro
 
    Serialized as a 64-bit unsigned integer in network byte order.
 
-6.2.3.  CK_VERSION (type 'v')
-
-   Serialized as two bytes: major version followed by minor version.
-
 6.3.  String Types
 
 6.3.1.  NUL-terminated String (type 'z')
 
-   Serialized as: 1.  Length (4 bytes): Number of bytes including NUL
-   (0x0) terminator 2.  Bytes (variable): UTF-8 encoded string with NUL
-   (0x0) terminator
+   Serialized as:
+
+   1.  Length (4 bytes): Number of bytes including NUL (0x0) terminator
+
+   2.  Bytes (variable): UTF-8 encoded string with NUL (0x0) terminator
 
 6.3.2.  Space-padded String (type 's')
 
    Used for fixed-length PKCS #11 string fields (e.g., CK_TOKEN_INFO
-   labels).  Serialized as: 1.  Length (4 bytes): Total length of the
-   string field 2.  Bytes (variable): UTF-8 encoded string, space-padded
-   to length
+   labels).  Serialized as:
+
+   1.  Length (4 bytes): Total length of the string field
+
+   2.  Bytes (variable): UTF-8 encoded string, space-padded to length
 
 6.4.  Array Types
 
-6.4.1.  Byte Array (type 'ay')
+   Arrays are serialized as:
 
-   Serialized as: 1.  Length (4 bytes): Number of bytes 2.  Bytes
-   (variable): Array contents
+   1.  Length (4 bytes): Number of elements following
 
-6.4.2.  CK_ULONG Array (type 'au')
+   2.  Data (variable): Array contents
 
-   Serialized as: 1.  Count (4 bytes): Number of elements 2.  Elements
-   (variable): Each element as a 4-byte unsigned integer
+   The size of each element is determined by the following type
+   signature.  For example, a CK_BYTE array ('ay') has elements of one
+   octet, while a CK_ULONG array ('au') has elements of 8 octets.
 
-6.5.  Complex Types
+6.5.  Record Types
 
-6.5.1.  CK_MECHANISM (type 'M')
+6.5.1.  CK_VERSION (type 'v')
+
+   Serialized as two bytes: major version followed by minor version.
+
+6.5.2.  CK_MECHANISM (type 'M')
 
    Serialized as: 1.  Mechanism type (4 bytes): CK_MECHANISM_TYPE value
    2.  Parameter type (1 byte): Type code for the parameter 3.
@@ -582,7 +577,7 @@ exec:command="bwrap --unshare-all --dir /tmp --ro-bind /etc/conf /etc/conf --pro
 
    *  CKM_ECDH1_DERIVE: Serialized as CK_ECDH1_DERIVE_PARAMS
 
-6.5.2.  CK_ATTRIBUTE (type 'A')
+6.5.3.  CK_ATTRIBUTE (type 'A')
 
    Attributes require special handling due to their recursive nature
    (attributes can contain attribute arrays).
@@ -594,37 +589,29 @@ exec:command="bwrap --unshare-all --dir /tmp --ro-bind /etc/conf /etc/conf --pro
    For attribute array values (e.g., CKA_WRAP_TEMPLATE), the value data
    is recursively serialized as an attribute array.
 
-6.5.3.  Attribute Buffer (type 'fA')
-
-   Used for output attribute arrays where the application provides
-   templates.  Follows the PKCS #11 convention for retrieving variable-
-   length values:
-
-   1.  Client sends attribute template with pValue pointers
-
-   2.  Server responds with:
-
-       *  Actual ulValueLen for each attribute
-
-       *  For non-sensitive attributes: actual pValue data
-
-       *  For sensitive attributes: CK_UNAVAILABLE_INFORMATION
-
 6.6.  Variable-Length Output Convention
 
    The protocol implements the PKCS #11 convention for variable-length
-   output parameters:
+   output parameters, signified by the f_ (buffer) type signature.
 
-   1.  Client sends f_ (buffer) with length 0 or requested size
+   What sent on the wire varies slightly, depending on the element type.
+   For the types with fixed-sized values, such as primitive types
+   (CK_BYTE and CK_ULONG), the client sends the number of elements.  For
+   other types whose element size is not known in advance, the client
+   sends value templates.
 
-   2.  Server responds with:
+   For example, to receive an attribute array with C_GetAttributeValue,
+   the client sends a request with a type signature including fA and the
+   corresponding argument serialized as:
 
-       *  If buffer too small or NULL: required size
+   1.  Length (4 bytes): Number of elements following
 
-       *  Otherwise: actual data and size
+   2.  Templates: Array of CK_ATTRIBUTE serialized as if pValue field is
+       NULL
 
-   This applies to functions like C_GetAttributeValue, C_Encrypt,
-   C_GetMechanismList, etc.
+   When the call is successfull, the server responds with an array of
+   CK_ATTRIBUTE aA filled with the actual ulValueLen and pValue for each
+   attribute.
 
 7.  Function Call Mappings
 
