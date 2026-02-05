@@ -5,7 +5,7 @@
 Network Working Group                                            D. Ueno
 Internet-Draft                                               Z. Fridrich
 Intended status: Informational                             Red Hat, Inc.
-Expires: 7 August 2026                                   3 February 2026
+Expires: 9 August 2026                                   5 February 2026
 
 
           Simple PKCS #11 Remote Procedure Call (RPC) Protocol
@@ -45,7 +45,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 7 August 2026.
+   This Internet-Draft will expire on 9 August 2026.
 
 Copyright Notice
 
@@ -69,9 +69,12 @@ Table of Contents
    2.  Protocol Overview
      2.1.  Architecture
    3.  Transport Layer
-     3.1.  Pipe Transport
-     3.2.  Unix Domain Socket Transport
-     3.3.  VSOCK Transport
+     3.1.  Transport Address
+     3.2.  Transport Types
+       3.2.1.  Pipe Transport
+       3.2.2.  Unix Domain Socket Transport
+       3.2.3.  VSOCK Transport
+     3.3.  Transport Address Examples
    4.  Version Negotiation
      4.1.  Protocol Versions
      4.2.  Negotiation Procedure
@@ -233,35 +236,81 @@ Table of Contents
 3.  Transport Layer
 
    The protocol operates over a reliable, ordered, bidirectional byte
-   stream.  Three transport mechanisms are commonly used: pipe, Unix
-   domain socket, and VSOCK.  In the p11-glue project [P11-GLUE], this
-   is configured in module configuration files with the remote: keyword.
+   stream.  This document defines three transport mechanisms: pipe, Unix
+   domain socket, and VSOCK.  A transport can be identified by a
+   transport address, which consists of a transport type and transport
+   attributes.
 
-3.1.  Pipe Transport
+3.1.  Transport Address
 
-   The client launches a server process and communicates via stdin/
-   stdout pipes.  In the p11-glue project, it is implemented through the
-   p11-kit remote helper command, which can be used to instruct the PKCS
-   #11 module indirection in the configuration file begins with |
-   followed by a command line:
+   Formally, a transport address takes the following form (for
+   explanation of Augmented BNF, see [RFC5234]).
 
-remote: |bwrap --unshare-all --dir /tmp --ro-bind /etc/conf /etc/conf --proc /proc --dev /dev --ro-bind /usr /usr --symlink /usr/lib64 /lib64 --ro-bind /run/pcscd /run/pcscd p11-kit remote /usr/lib64/pkcs11/libpkcs11module.so
+pk11-transport-addr  = pk11-transport-type ":" pk11-transport-attrs
+pk11-transport-attrs = [ pk11-transport-attr *(";" pk11-transport-attr) ]
+pk11-attr-name-char  = ALPHA / DIGIT / "-" / "_"
+pk11-attr-value-char = %x20-3A / %x3C-7E
+pk11-attr-value      = *pk11-attr-value-char /
+                       DQUOTE *(pk11-attr-value-char / %x3B) DQUOTE
+pk11-transport-attr = 1*pk11-attr-name-char "=" *pk11-attr-value
 
-3.2.  Unix Domain Socket Transport
+   In the p11-glue project [P11-GLUE], this is configured in module
+   configuration files with the remote: keyword.
 
-   The client connects to a server listening on a Unix domain socket.
-   In the p11-glue project [P11-GLUE], this is implemented as a special
-   configuration syntax:
+3.2.  Transport Types
 
-   remote: unix:path=/path/to/socket
+3.2.1.  Pipe Transport
 
-3.3.  VSOCK Transport
+   The client launches a server executable and communicates via stdin/
+   stdout pipes.  A transport type of the pipe transport is "exec",
+   which MUST take a transport attribute "command" to specify the
+   command line of the server executable.
+
+3.2.2.  Unix Domain Socket Transport
+
+   The client connects to a server listening on a Unix domain socket.  A
+   transport type of the Unix domain socket transport is "unix", which
+   MUST take a transport attribute "path" to specify the socket path on
+   the filesystem.
+
+3.2.3.  VSOCK Transport
 
    For virtual machine scenarios, the protocol can operate over VSOCK
-   sockets.  In the p11-glue project [P11-GLUE], this is implemented as
-   a special configuration syntax:
+   sockets.  A transport type of the VSOCK transport is "vsock", which
+   must take two transport attributes, "cid" to specify the Content
+   Identifier (CID) and "port" to specify the port number.
 
-   remote: vsock:cid=CID;port=PORT
+3.3.  Transport Address Examples
+
+   This section contains some example of how transport can be identified
+   using the transport address.
+
+   The p11-glue project [P11-GLUE] provides a simple helper program,
+   p11-kit remote, which translates PKCS #11 RPC into C function calls.
+
+   The following example instructs the client to launch the p11-kit
+   remote command and connect to it through a pipe transport.
+
+   exec:command="p11-kit remote /usr/lib64/pkcs11/libpkcs11module.so"
+
+   This is useful to sandbox a proprietary PKCS #11 modules.  The
+   command line of the above can be inside a sandbox created with
+   bubblewrap.
+
+exec:command="bwrap --unshare-all --dir /tmp --ro-bind /etc/conf /etc/conf --proc /proc --dev /dev --ro-bind /usr /usr --symlink /usr/lib64 /lib64 --ro-bind /run/pcscd /run/pcscd p11-kit remote /usr/lib64/pkcs11/libpkcs11module.so"
+
+   The p11-glue project [P11-GLUE] also provides a standalone server
+   program, p11-kit server, which listens on a Unix domain socket.  The
+   following example tells the client to connect to a Unix domain socket
+   on the path "/path/to/socket".
+
+   unix:path=/path/to/socket
+
+   Similarly, if the server is running on a host of a virtual machine,
+   the client can connect to it with the following address, where CID 2
+   is the well-known address of the host.
+
+   vsock:cid=2;port=1111
 
 4.  Version Negotiation
 
@@ -930,6 +979,11 @@ remote: |bwrap --unshare-all --dir /tmp --ro-bind /etc/conf /etc/conf --proc /pr
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
               <https://www.rfc-editor.org/rfc/rfc2119>.
+
+   [RFC5234]  Crocker, D., Ed. and P. Overell, "Augmented BNF for Syntax
+              Specifications: ABNF", STD 68, RFC 5234,
+              DOI 10.17487/RFC5234, January 2008,
+              <https://www.rfc-editor.org/rfc/rfc5234>.
 
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,

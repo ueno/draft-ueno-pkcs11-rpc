@@ -1052,7 +1052,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Ueno &amp; Fridrich</td>
-<td class="center">Expires 7 August 2026</td>
+<td class="center">Expires 9 August 2026</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1065,12 +1065,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-ueno-pkcs11-rpc-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-02-03" class="published">3 February 2026</time>
+<time datetime="2026-02-05" class="published">5 February 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2026-08-07">7 August 2026</time></dd>
+<dd class="expires"><time datetime="2026-08-09">9 August 2026</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1116,7 +1116,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 7 August 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 9 August 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1168,13 +1168,24 @@ svg :is([fill="white"], [fill^="#fff"]) {
             <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-transport-layer" class="internal xref">Transport Layer</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
-                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-pipe-transport" class="internal xref">Pipe Transport</a></p>
+                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-transport-address" class="internal xref">Transport Address</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
-                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-unix-domain-socket-transpor" class="internal xref">Unix Domain Socket Transport</a></p>
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-transport-types" class="internal xref">Transport Types</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2.2.1">
+                    <p id="section-toc.1-1.3.2.2.2.1.1"><a href="#section-3.2.1" class="auto internal xref">3.2.1</a>.  <a href="#name-pipe-transport" class="internal xref">Pipe Transport</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2.2.2">
+                    <p id="section-toc.1-1.3.2.2.2.2.1"><a href="#section-3.2.2" class="auto internal xref">3.2.2</a>.  <a href="#name-unix-domain-socket-transpor" class="internal xref">Unix Domain Socket Transport</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2.2.3">
+                    <p id="section-toc.1-1.3.2.2.2.3.1"><a href="#section-3.2.3" class="auto internal xref">3.2.3</a>.  <a href="#name-vsock-transport" class="internal xref">VSOCK Transport</a></p>
+</li>
+                </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
-                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-vsock-transport" class="internal xref">VSOCK Transport</a></p>
+                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-transport-address-examples" class="internal xref">Transport Address Examples</a></p>
 </li>
             </ul>
 </li>
@@ -1536,43 +1547,88 @@ appear in all capitals, as shown here.<a href="#section-1.2-1" class="pilcrow">�
       <h2 id="name-transport-layer">
 <a href="#section-3" class="section-number selfRef">3. </a><a href="#name-transport-layer" class="section-name selfRef">Transport Layer</a>
       </h2>
-<p id="section-3-1">The protocol operates over a reliable, ordered, bidirectional byte stream. Three transport mechanisms are commonly used: pipe, Unix domain socket, and VSOCK. In the p11-glue project <span>[<a href="#P11-GLUE" class="cite xref">P11-GLUE</a>]</span>, this is configured in module configuration files with the <code>remote:</code> keyword.<a href="#section-3-1" class="pilcrow">¶</a></p>
-<div id="pipe-transport">
+<p id="section-3-1">The protocol operates over a reliable, ordered, bidirectional byte stream. This document defines three transport mechanisms: pipe, Unix domain socket, and VSOCK. A transport can be identified by a transport address, which consists of a transport type and transport attributes.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<div id="transport-address">
 <section id="section-3.1">
-        <h3 id="name-pipe-transport">
-<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-pipe-transport" class="section-name selfRef">Pipe Transport</a>
+        <h3 id="name-transport-address">
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-transport-address" class="section-name selfRef">Transport Address</a>
         </h3>
-<p id="section-3.1-1">The client launches a server process and communicates via stdin/stdout pipes. In the p11-glue project, it is implemented through the <code>p11-kit remote</code> helper command, which can be used to instruct the PKCS #11 module indirection in the configuration file begins with <code>|</code> followed by a command line:<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.1-1">Formally, a transport address takes the following form (for explanation of Augmented BNF, see <span>[<a href="#RFC5234" class="cite xref">RFC5234</a>]</span>).<a href="#section-3.1-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3.1-2">
 <pre>
-remote: |bwrap --unshare-all --dir /tmp --ro-bind /etc/conf /etc/conf --proc /proc --dev /dev --ro-bind /usr /usr --symlink /usr/lib64 /lib64 --ro-bind /run/pcscd /run/pcscd p11-kit remote /usr/lib64/pkcs11/libpkcs11module.so
+pk11-transport-addr  = pk11-transport-type ":" pk11-transport-attrs
+pk11-transport-attrs = [ pk11-transport-attr *(";" pk11-transport-attr) ]
+pk11-attr-name-char  = ALPHA / DIGIT / "-" / "_"
+pk11-attr-value-char = %x20-3A / %x3C-7E
+pk11-attr-value      = *pk11-attr-value-char /
+                       DQUOTE *(pk11-attr-value-char / %x3B) DQUOTE
+pk11-transport-attr = 1*pk11-attr-name-char "=" *pk11-attr-value
 </pre><a href="#section-3.1-2" class="pilcrow">¶</a>
 </div>
+<p id="section-3.1-3">In the p11-glue project <span>[<a href="#P11-GLUE" class="cite xref">P11-GLUE</a>]</span>, this is configured in module configuration files with the <code>remote:</code> keyword.<a href="#section-3.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="transport-types">
+<section id="section-3.2">
+        <h3 id="name-transport-types">
+<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-transport-types" class="section-name selfRef">Transport Types</a>
+        </h3>
+<div id="pipe-transport">
+<section id="section-3.2.1">
+          <h4 id="name-pipe-transport">
+<a href="#section-3.2.1" class="section-number selfRef">3.2.1. </a><a href="#name-pipe-transport" class="section-name selfRef">Pipe Transport</a>
+          </h4>
+<p id="section-3.2.1-1">The client launches a server executable and communicates via stdin/stdout pipes. A transport type of the pipe transport is "exec", which <span class="bcp14">MUST</span> take a transport attribute "command" to specify the command line of the server executable.<a href="#section-3.2.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="unix-domain-socket-transport">
-<section id="section-3.2">
-        <h3 id="name-unix-domain-socket-transpor">
-<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-unix-domain-socket-transpor" class="section-name selfRef">Unix Domain Socket Transport</a>
-        </h3>
-<p id="section-3.2-1">The client connects to a server listening on a Unix domain socket. In the p11-glue project <span>[<a href="#P11-GLUE" class="cite xref">P11-GLUE</a>]</span>, this is implemented as a special configuration syntax:<a href="#section-3.2-1" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-3.2-2">
-<pre>
-remote: unix:path=/path/to/socket
-</pre><a href="#section-3.2-2" class="pilcrow">¶</a>
-</div>
+<section id="section-3.2.2">
+          <h4 id="name-unix-domain-socket-transpor">
+<a href="#section-3.2.2" class="section-number selfRef">3.2.2. </a><a href="#name-unix-domain-socket-transpor" class="section-name selfRef">Unix Domain Socket Transport</a>
+          </h4>
+<p id="section-3.2.2-1">The client connects to a server listening on a Unix domain socket. A transport type of the Unix domain socket transport is "unix", which <span class="bcp14">MUST</span> take a transport attribute "path" to specify the socket path on the filesystem.<a href="#section-3.2.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="vsock-transport">
+<section id="section-3.2.3">
+          <h4 id="name-vsock-transport">
+<a href="#section-3.2.3" class="section-number selfRef">3.2.3. </a><a href="#name-vsock-transport" class="section-name selfRef">VSOCK Transport</a>
+          </h4>
+<p id="section-3.2.3-1">For virtual machine scenarios, the protocol can operate over VSOCK sockets. A transport type of the VSOCK transport is "vsock", which must take two transport attributes, "cid" to specify the Content Identifier (CID) and "port" to specify the port number.<a href="#section-3.2.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="transport-address-examples">
 <section id="section-3.3">
-        <h3 id="name-vsock-transport">
-<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-vsock-transport" class="section-name selfRef">VSOCK Transport</a>
+        <h3 id="name-transport-address-examples">
+<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-transport-address-examples" class="section-name selfRef">Transport Address Examples</a>
         </h3>
-<p id="section-3.3-1">For virtual machine scenarios, the protocol can operate over VSOCK sockets. In the p11-glue project <span>[<a href="#P11-GLUE" class="cite xref">P11-GLUE</a>]</span>, this is implemented as a special configuration syntax:<a href="#section-3.3-1" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-3.3-2">
+<p id="section-3.3-1">This section contains some example of how transport can be identified using the transport address.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.3-2">The p11-glue project <span>[<a href="#P11-GLUE" class="cite xref">P11-GLUE</a>]</span> provides a simple helper program, <code>p11-kit remote</code>, which translates PKCS #11 RPC into C function calls.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
+<p id="section-3.3-3">The following example instructs the client to launch the <code>p11-kit remote</code> command and connect to it through a pipe transport.<a href="#section-3.3-3" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.3-4">
 <pre>
-remote: vsock:cid=CID;port=PORT
-</pre><a href="#section-3.3-2" class="pilcrow">¶</a>
+exec:command="p11-kit remote /usr/lib64/pkcs11/libpkcs11module.so"
+</pre><a href="#section-3.3-4" class="pilcrow">¶</a>
+</div>
+<p id="section-3.3-5">This is useful to sandbox a proprietary PKCS #11 modules. The command line of the above can be inside a sandbox created with bubblewrap.<a href="#section-3.3-5" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.3-6">
+<pre>
+exec:command="bwrap --unshare-all --dir /tmp --ro-bind /etc/conf /etc/conf --proc /proc --dev /dev --ro-bind /usr /usr --symlink /usr/lib64 /lib64 --ro-bind /run/pcscd /run/pcscd p11-kit remote /usr/lib64/pkcs11/libpkcs11module.so"
+</pre><a href="#section-3.3-6" class="pilcrow">¶</a>
+</div>
+<p id="section-3.3-7">The p11-glue project <span>[<a href="#P11-GLUE" class="cite xref">P11-GLUE</a>]</span> also provides a standalone server program, <code>p11-kit server</code>, which listens on a Unix domain socket. The following example tells the client to connect to a Unix domain socket on the path "/path/to/socket".<a href="#section-3.3-7" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.3-8">
+<pre>
+unix:path=/path/to/socket
+</pre><a href="#section-3.3-8" class="pilcrow">¶</a>
+</div>
+<p id="section-3.3-9">Similarly, if the server is running on a host of a virtual machine, the client can connect to it with the following address, where CID 2 is the well-known address of the host.<a href="#section-3.3-9" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.3-10">
+<pre>
+vsock:cid=2;port=1111
+</pre><a href="#section-3.3-10" class="pilcrow">¶</a>
 </div>
 </section>
 </div>
@@ -2650,6 +2706,10 @@ Response signature: <code>"uPu"</code> (derived_key_handle, updated_mechanism_pa
 <dt id="RFC2119">[RFC2119]</dt>
         <dd>
 <span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC5234">[RFC5234]</dt>
+        <dd>
+<span class="refAuthor">Crocker, D., Ed.</span> and <span class="refAuthor">P. Overell</span>, <span class="refTitle">"Augmented BNF for Syntax Specifications: ABNF"</span>, <span class="seriesInfo">STD 68</span>, <span class="seriesInfo">RFC 5234</span>, <span class="seriesInfo">DOI 10.17487/RFC5234</span>, <time datetime="2008-01" class="refDate">January 2008</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc5234">https://www.rfc-editor.org/rfc/rfc5234</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC8174">[RFC8174]</dt>
       <dd>
