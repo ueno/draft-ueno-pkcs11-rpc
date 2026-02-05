@@ -370,15 +370,6 @@ Used for fixed-length PKCS #11 string fields (e.g., CK_TOKEN_INFO labels). Seria
 1. Length (4 bytes): Total length of the string field
 2. Bytes (variable): UTF-8 encoded string, space-padded to length
 
-## Array Types
-
-Arrays are serialized as:
-
-1. Length (4 bytes): Number of elements following
-2. Data (variable): Array contents
-
-The size of each element is determined by the following type signature. For example, a CK_BYTE array ('ay') has elements of one octet, while a CK_ULONG array ('au') has elements of 8 octets.
-
 ## Record Types
 
 ### CK_VERSION (type 'v')
@@ -411,11 +402,20 @@ Serialized as:
 
 For attribute array values (e.g., CKA_WRAP_TEMPLATE), the value data is recursively serialized as an attribute array.
 
-## Variable-Length Output Convention
+## Array Types
+
+Arrays are serialized as:
+
+1. Length (4 bytes): Number of elements following
+2. Data (variable): Array contents
+
+The size of each element is determined by the following type signature. For example, a CK_BYTE array ('ay') has elements of one octet, while a CK_ULONG array ('au') has elements of 8 octets.
+
+## Buffer Types
 
 The protocol implements the PKCS #11 convention for variable-length output parameters, signified by the `f_` (buffer) type signature.
 
-What sent on the wire varies slightly, depending on the element type. For the types with fixed-sized values, such as primitive types (CK_BYTE and CK_ULONG), the client sends the number of elements. For other types whose element size is not known in advance, the client sends value templates.
+What sent on the wire depends on the element type. For the types with fixed-sized values, such as primitive types (CK_BYTE and CK_ULONG), the client sends the number of elements. For other types whose element size is not known in advance, the client sends "templates" with which only the fixed fields are filled.
 
 For example, to receive an attribute array with C_GetAttributeValue, the client sends a request with a type signature including `fA` and the corresponding argument serialized as:
 
