@@ -23,9 +23,9 @@ author:
     organization: Red Hat, Inc.
     email: dueno@redhat.com
  -
-	fullname: Zoltán Fridrich
-	organization: Red Hat, Inc.
-	email: zfridric@redhat.com
+    fullname: Zoltán Fridrich
+    organization: Red Hat, Inc.
+    email: zfridric@redhat.com
 
 normative:
   PKCS11-v2.40:
