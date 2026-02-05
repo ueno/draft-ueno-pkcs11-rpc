@@ -329,7 +329,7 @@ The protocol uses a type-signature based serialization format inspired by the D-
 
 ## Type Signatures
 
-The following type codes are defined:
+Type signatures comprises a series of type codes as defined below. Most of them represent a single type, such as CK_BYTE, while a couple of them, `a` and `f`, represent arrays and output buffers of elements in other types signified by the following type code. For example, `ay` means an array of CK_BYTE.
 
 | Code | Meaning                                    |
 |------|--------------------------------------------|
@@ -344,11 +344,6 @@ The following type codes are defined:
 | `y`  | CK_BYTE                                    |
 | `z`  | Null-terminated string                     |
 
-### Prefix Notation
-
-- `a_`: Array of type `_`. The serialization includes a count followed by elements.
-- `f_`: Buffer for type `_`. Used for output parameters where the buffer size is negotiated using the PKCS #11 convention (NULL pointer to query size, then actual buffer).
-
 ## Primitive Types
 
 ### CK_BYTE (type 'y')
@@ -359,39 +354,36 @@ Serialized as a single byte.
 
 Serialized as a 64-bit unsigned integer in network byte order.
 
-### CK_VERSION (type 'v')
-
-Serialized as two bytes: major version followed by minor version.
-
 ## String Types
 
 ### NUL-terminated String (type 'z')
 
 Serialized as:
+
 1. Length (4 bytes): Number of bytes including NUL (0x0) terminator
 2. Bytes (variable): UTF-8 encoded string with NUL (0x0) terminator
 
 ### Space-padded String (type 's')
 
 Used for fixed-length PKCS #11 string fields (e.g., CK_TOKEN_INFO labels). Serialized as:
+
 1. Length (4 bytes): Total length of the string field
 2. Bytes (variable): UTF-8 encoded string, space-padded to length
 
 ## Array Types
 
-### Byte Array (type 'ay')
+Arrays are serialized as:
 
-Serialized as:
-1. Length (4 bytes): Number of bytes
-2. Bytes (variable): Array contents
+1. Length (4 bytes): Number of elements following
+2. Data (variable): Array contents
 
-### CK_ULONG Array (type 'au')
+The size of each element is determined by the following type signature. For example, a CK_BYTE array ('ay') has elements of one octet, while a CK_ULONG array ('au') has elements of 8 octets.
 
-Serialized as:
-1. Count (4 bytes): Number of elements
-2. Elements (variable): Each element as a 4-byte unsigned integer
+## Record Types
 
-## Complex Types
+### CK_VERSION (type 'v')
+
+Serialized as two bytes: major version followed by minor version.
 
 ### CK_MECHANISM (type 'M')
 
@@ -419,26 +411,18 @@ Serialized as:
 
 For attribute array values (e.g., CKA_WRAP_TEMPLATE), the value data is recursively serialized as an attribute array.
 
-### Attribute Buffer (type 'fA')
-
-Used for output attribute arrays where the application provides templates. Follows the PKCS #11 convention for retrieving variable-length values:
-
-1. Client sends attribute template with pValue pointers
-2. Server responds with:
-   - Actual ulValueLen for each attribute
-   - For non-sensitive attributes: actual pValue data
-   - For sensitive attributes: CK_UNAVAILABLE_INFORMATION
-
 ## Variable-Length Output Convention
 
-The protocol implements the PKCS #11 convention for variable-length output parameters:
+The protocol implements the PKCS #11 convention for variable-length output parameters, signified by the `f_` (buffer) type signature.
 
-1. Client sends `f_` (buffer) with length 0 or requested size
-2. Server responds with:
-   - If buffer too small or NULL: required size
-   - Otherwise: actual data and size
+What sent on the wire varies slightly, depending on the element type. For the types with fixed-sized values, such as primitive types (CK_BYTE and CK_ULONG), the client sends the number of elements. For other types whose element size is not known in advance, the client sends value templates.
 
-This applies to functions like C_GetAttributeValue, C_Encrypt, C_GetMechanismList, etc.
+For example, to receive an attribute array with C_GetAttributeValue, the client sends a request with a type signature including `fA` and the corresponding argument serialized as:
+
+1. Length (4 bytes): Number of elements following
+2. Templates: Array of CK_ATTRIBUTE serialized as if pValue field is NULL
+
+When the call is successfull, the server responds with an array of CK_ATTRIBUTE `aA` filled with the actual ulValueLen and pValue for each attribute.
 
 # Function Call Mappings
 
