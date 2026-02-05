@@ -42,6 +42,8 @@ normative:
       org: OASIS
     date: 2021-06
 
+  RFC5234:
+
 informative:
   KMIP:
     title: "Key Management Interoperability Protocol Specification Version 2.1"
@@ -128,30 +130,66 @@ The protocol consists of:
 
 # Transport Layer
 
-The protocol operates over a reliable, ordered, bidirectional byte stream. Three transport mechanisms are commonly used: pipe, Unix domain socket, and VSOCK. In the p11-glue project {{P11-GLUE}}, this is configured in module configuration files with the `remote:` keyword.
+The protocol operates over a reliable, ordered, bidirectional byte stream. This document defines three transport mechanisms: pipe, Unix domain socket, and VSOCK. A transport can be identified by a transport address, which consists of a transport type and transport attributes.
 
-## Pipe Transport
+## Transport Address
 
-The client launches a server process and communicates via stdin/stdout pipes. In the p11-glue project, it is implemented through the `p11-kit remote` helper command, which can be used to instruct the PKCS #11 module indirection in the configuration file begins with `|` followed by a command line:
-
-~~~
-remote: |bwrap --unshare-all --dir /tmp --ro-bind /etc/conf /etc/conf --proc /proc --dev /dev --ro-bind /usr /usr --symlink /usr/lib64 /lib64 --ro-bind /run/pcscd /run/pcscd p11-kit remote /usr/lib64/pkcs11/libpkcs11module.so
-~~~
-
-## Unix Domain Socket Transport
-
-The client connects to a server listening on a Unix domain socket. In the p11-glue project {{P11-GLUE}}, this is implemented as a special configuration syntax:
+Formally, a transport address takes the following form (for explanation of Augmented BNF, see {{RFC5234}}).
 
 ~~~
-remote: unix:path=/path/to/socket
+pk11-transport-addr  = pk11-transport-type ":" pk11-transport-attrs
+pk11-transport-attrs = [ pk11-transport-attr *(";" pk11-transport-attr) ]
+pk11-attr-name-char  = ALPHA / DIGIT / "-" / "_"
+pk11-attr-value-char = %x20-3A / %x3C-7E
+pk11-attr-value      = *pk11-attr-value-char /
+                       DQUOTE *(pk11-attr-value-char / %x3B) DQUOTE
+pk11-transport-attr = 1*pk11-attr-name-char "=" *pk11-attr-value
 ~~~
 
-## VSOCK Transport
+In the p11-glue project {{P11-GLUE}}, this is configured in module configuration files with the `remote:` keyword.
 
-For virtual machine scenarios, the protocol can operate over VSOCK sockets. In the p11-glue project {{P11-GLUE}}, this is implemented as a special configuration syntax:
+## Transport Types
+
+### Pipe Transport
+
+The client launches a server executable and communicates via stdin/stdout pipes. A transport type of the pipe transport is "exec", which MUST take a transport attribute "command" to specify the command line of the server executable.
+
+### Unix Domain Socket Transport
+
+The client connects to a server listening on a Unix domain socket. A transport type of the Unix domain socket transport is "unix", which MUST take a transport attribute "path" to specify the socket path on the filesystem.
+
+### VSOCK Transport
+
+For virtual machine scenarios, the protocol can operate over VSOCK sockets. A transport type of the VSOCK transport is "vsock", which must take two transport attributes, "cid" to specify the Content Identifier (CID) and "port" to specify the port number.
+
+## Transport Address Examples
+
+This section contains some example of how transport can be identified using the transport address.
+
+The p11-glue project {{P11-GLUE}} provides a simple helper program, `p11-kit remote`, which translates PKCS #11 RPC into C function calls.
+
+The following example instructs the client to launch the `p11-kit remote` command and connect to it through a pipe transport.
 
 ~~~
-remote: vsock:cid=CID;port=PORT
+exec:command="p11-kit remote /usr/lib64/pkcs11/libpkcs11module.so"
+~~~
+
+This is useful to sandbox a proprietary PKCS #11 modules. The command line of the above can be inside a sandbox created with bubblewrap.
+
+~~~
+exec:command="bwrap --unshare-all --dir /tmp --ro-bind /etc/conf /etc/conf --proc /proc --dev /dev --ro-bind /usr /usr --symlink /usr/lib64 /lib64 --ro-bind /run/pcscd /run/pcscd p11-kit remote /usr/lib64/pkcs11/libpkcs11module.so"
+~~~
+
+The p11-glue project {{P11-GLUE}} also provides a standalone server program, `p11-kit server`, which listens on a Unix domain socket. The following example tells the client to connect to a Unix domain socket on the path "/path/to/socket".
+
+~~~
+unix:path=/path/to/socket
+~~~
+
+Similarly, if the server is running on a host of a virtual machine, the client can connect to it with the following address, where CID 2 is the well-known address of the host.
+
+~~~
+vsock:cid=2;port=1111
 ~~~
 
 # Version Negotiation
