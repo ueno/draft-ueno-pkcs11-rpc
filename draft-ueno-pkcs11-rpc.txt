@@ -249,8 +249,8 @@ pk11-attr-value-char  = %x20-3A / %x3C-7E /
 pk11-attr-value-qchar = pk11-attr-value-char / ("\" %x20-%7E)
 pk11-attr-value       = *pk11-attr-value-char /
                         DQUOTE *pk11-attr-value-qchar DQUOTE
-                                                     ; quoted strings may contain backslash escaped
-                                                         ; characters, such as \;, \"
+                             ; quoted strings may contain backslash escaped
+                             ; characters, such as \;, \"
 pk11-transport-attr   = 1*pk11-attr-name-char "=" *pk11-attr-value
 
    In the p11-glue project [P11-GLUE], this is configured in module
