@@ -137,13 +137,16 @@ The protocol operates over a reliable, ordered, bidirectional byte stream. This 
 Formally, a transport address takes the following form (for explanation of Augmented BNF, see {{RFC5234}}).
 
 ~~~
-pk11-transport-addr  = pk11-transport-type ":" pk11-transport-attrs
-pk11-transport-attrs = [ pk11-transport-attr *(";" pk11-transport-attr) ]
-pk11-attr-name-char  = ALPHA / DIGIT / "-" / "_"
-pk11-attr-value-char = %x20-3A / %x3C-7E
-pk11-attr-value      = *pk11-attr-value-char /
-                       DQUOTE *(pk11-attr-value-char / %x3B) DQUOTE
-pk11-transport-attr = 1*pk11-attr-name-char "=" *pk11-attr-value
+pk11-transport-addr   = pk11-transport-type ":" pk11-transport-attrs
+pk11-transport-attrs  = [ pk11-transport-attr *(";" pk11-transport-attr) ]
+pk11-attr-name-char   = ALPHA / DIGIT / "-" / "_"
+pk11-attr-value-char  = %x20-3A / %x3C-7E /
+pk11-attr-value-qchar = pk11-attr-value-char / ("\" %x20-%7E)
+pk11-attr-value       = *pk11-attr-value-char /
+                        DQUOTE *pk11-attr-value-qchar DQUOTE
+						     ; quoted strings may contain backslash escaped
+							 ; characters, such as \;, \"
+pk11-transport-attr   = 1*pk11-attr-name-char "=" *pk11-attr-value
 ~~~
 
 In the p11-glue project {{P11-GLUE}}, this is configured in module configuration files with the `remote:` keyword.
@@ -152,15 +155,15 @@ In the p11-glue project {{P11-GLUE}}, this is configured in module configuration
 
 ### Pipe Transport
 
-The client launches a server executable and communicates via stdin/stdout pipes. A transport type of the pipe transport is "exec", which MUST take a transport attribute "command" to specify the command line of the server executable.
+The client launches a server executable and communicates via stdin/stdout pipes. The transport type of the pipe transport is "exec", which MUST take a transport attribute "command" to specify the command line of the server executable.
 
 ### Unix Domain Socket Transport
 
-The client connects to a server listening on a Unix domain socket. A transport type of the Unix domain socket transport is "unix", which MUST take a transport attribute "path" to specify the socket path on the filesystem.
+The client connects to a server listening on a Unix domain socket. The transport type of the Unix domain socket transport is "unix", which MUST take a transport attribute "path" to specify the socket path on the filesystem.
 
 ### VSOCK Transport
 
-For virtual machine scenarios, the protocol can operate over VSOCK sockets. A transport type of the VSOCK transport is "vsock", which must take two transport attributes, "cid" to specify the Content Identifier (CID) and "port" to specify the port number.
+For virtual machine scenarios, the protocol can operate over VSOCK sockets. The transport type of the VSOCK transport is "vsock", which must take two transport attributes, "cid" to specify the Content Identifier (CID) and "port" to specify the port number.
 
 ## Transport Address Examples
 
@@ -400,7 +403,7 @@ Serialized as:
 2. Value length (4 bytes): Length of pValue
 3. Value data (variable): Depends on attribute type
 
-For attribute array values (e.g., CKA_WRAP_TEMPLATE), the value data is recursively serialized as an attribute array.
+Note that if the CKF_ARRAY_ATTRIBUTE flag is set in the attribute type, the value data is recursively serialized, in a depth-first, pre-order traversal.
 
 ## Array Types
 
@@ -415,12 +418,14 @@ The size of each element is determined by the following type signature. For exam
 
 The protocol implements the PKCS #11 convention for variable-length output parameters, signified by the `f_` (buffer) type signature.
 
-What sent on the wire depends on the element type. For the types with fixed-sized values, such as primitive types (CK_BYTE and CK_ULONG), the client sends the number of elements. For other types whose element size is not known in advance, the client sends "templates" with which only the fixed fields are filled.
+The serialization of the argument of type `f_` depends on the element type. For the types with known sizes, the client only sends the number of elements. For the types with unknown sizes, the client additionally sends "templates" with which only the fixed fields are filled.
 
 For example, to receive an attribute array with C_GetAttributeValue, the client sends a request with a type signature including `fA` and the corresponding argument serialized as:
 
 1. Length (4 bytes): Number of elements following
 2. Templates: Array of CK_ATTRIBUTE serialized as if pValue field is NULL
+
+Note that for recursively serialized attributes, only the leaf CK_ATTRIBUTE values have pValue field set to NULL.
 
 When the call is successfull, the server responds with an array of CK_ATTRIBUTE `aA` filled with the actual ulValueLen and pValue for each attribute.
 
